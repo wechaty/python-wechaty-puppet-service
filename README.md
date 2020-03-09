@@ -16,6 +16,7 @@ Python Hostie Puppet for Wechaty
 ## Usage
 
 ```python
+import asyncio
 from wechaty import Wechaty
 
 bot = new Wechaty({
