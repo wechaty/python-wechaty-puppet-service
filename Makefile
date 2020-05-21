@@ -29,6 +29,7 @@ lint: pylint pycodestyle flake8 mypy pytype
 pylint:
 	pylint \
 		--load-plugins pylint_quotes \
+		--disable W0511 \
 		$(SOURCE_GLOB)
 
 .PHONY: pycodestyle
@@ -52,8 +53,8 @@ mypy:
 
 .PHONE: pytype
 pytype:
-	pytype src/
-	pytype examples/
+	pytype src/ --disable=import-error,pyi-error
+	pytype examples/ --disable=import-error
 
 .PHONY: install
 install:
