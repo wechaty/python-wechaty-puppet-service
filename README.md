@@ -18,13 +18,10 @@ Python Hostie Puppet for Wechaty
 ```python
 import asyncio
 from wechaty import Wechaty
+from wechaty_puppet_hostie import HostiePuppet
 
-bot = new Wechaty({
-  puppet: 'wechaty-puppet-hostie',
-  puppetOptions: {
-    token: 'secret'
-  }
-})
+bot = Wechaty(HostiePuppet("your-token-here"))
+bot.on('message', lambda x: print(x))
 
 asyncio.run(wechaty.start())
 ```
