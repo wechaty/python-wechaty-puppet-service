@@ -1,8 +1,9 @@
 """
 doc
 """
-from .puppet_hostie import PuppetHostie
+from .puppet import HostiePuppet
+
 
 __all__ = [
-    'PuppetHostie',
+    'HostiePuppet'
 ]

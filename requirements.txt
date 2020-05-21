@@ -1,1 +1,5 @@
-wechaty-puppet
+grpclib
+pyee
+requests
+chatie-grpc>=0.15.dev4
+wechaty-puppet>=0.0.5
