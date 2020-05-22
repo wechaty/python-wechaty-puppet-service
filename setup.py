@@ -47,6 +47,8 @@ def setup() -> None:
         url='https://github.com/wechaty/python-wechaty-puppet-hostie',
         packages=setuptools.find_packages('src'),
         package_dir={'': 'src'},
+        install_requires = ['grpclib', 'pyee', 'requests',
+                            'chatie-grpc', 'wechaty-puppet'],
         classifiers=[
             'Programming Language :: Python :: 3.7',
             'License :: OSI Approved :: Apache Software License',
