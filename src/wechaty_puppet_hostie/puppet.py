@@ -779,7 +779,7 @@ class HostiePuppet(Puppet):
                     log.debug('receive heartbeat info <%s>', payload_data)
                     # Huan(202005) FIXME:
                     #   https://github.com/wechaty/python-wechaty-puppet/issues/6
-                    #   Workaround for additional server json payload key: timeout
+                    #   Workaround for unexpected server json payload key: timeout
                     if 'timeout' in payload_data:
                         del payload_data['key']
 
