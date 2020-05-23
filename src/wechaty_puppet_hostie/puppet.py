@@ -63,6 +63,11 @@ from wechaty_puppet import (    # type: ignore
     UrlLinkPayload
 )
 
+from .config import (
+    WECHATY_PUPPET_HOSTIE_TOKEN,
+    WECHATY_PUPPET_HOSTIE_ENDPOINT
+)
+
 log = logging.getLogger('HostiePuppet')
 
 
@@ -74,11 +79,15 @@ class HostiePuppet(Puppet):
 
     def __init__(self, options: PuppetOptions, name: str = 'hostie_puppet'):
         super(HostiePuppet, self).__init__(options, name)
-        # self.channel: Channel = None
-        # self.puppet_stub: PuppetStub = None
 
-        if options.token is None:
-            raise Exception('wechaty-puppet-hostie: token not found.')
+        if options.token is None :
+            if WECHATY_PUPPET_HOSTIE_TOKEN is None:
+                raise Exception('wechaty-puppet-hostie: token not found.')
+            options.token = WECHATY_PUPPET_HOSTIE_TOKEN
+
+        if options.end_point is None \
+            and WECHATY_PUPPET_HOSTIE_ENDPOINT is not None:
+            options.end_point = WECHATY_PUPPET_HOSTIE_ENDPOINT
 
         self.channel, self.puppet_stub = self.init_puppet()
 
@@ -658,22 +667,23 @@ class HostiePuppet(Puppet):
         """
         start puppet channelcontact_self_qr_code
         """
-        response = requests.get(
-            f'https://api.chatie.io/v0/hosties/{self.options.token}'
-        )
+        if self.options.end_point is None:
+            response = requests.get(
+                f'https://api.chatie.io/v0/hosties/{self.options.token}'
+            )
 
-        if response.status_code != 200:
-            raise Exception('hostie server is invalid ... ')
+            if response.status_code != 200:
+                raise Exception('hostie server is invalid ... ')
 
-        data = response.json()
-        if 'ip' not in data or data['ip'] == '0.0.0.0':
-            raise Exception("can't find hostie server address")
+            data = response.json()
+            if 'ip' not in data or data['ip'] == '0.0.0.0':
+                raise Exception("can't find hostie server address")
+            log.debug('get puppet ip address : <%s>', data)
+            self.options.end_point = data['ip']
         log.info('init puppet hostie')
-        log.debug('get puppet ip address : <%s>', data)
 
-        channel = Channel(host=data['ip'], port=8788)
+        channel = Channel(host=self.options.end_point, port=8788)
         puppet_stub = PuppetStub(channel)
-        # try to restart puppet_stub
         return channel, puppet_stub
 
     async def start(self) -> None:
