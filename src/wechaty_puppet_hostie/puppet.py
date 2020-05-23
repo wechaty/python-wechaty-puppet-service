@@ -51,7 +51,6 @@ from wechaty_puppet import (    # type: ignore
     EventFriendshipPayload,
     EventHeartbeatPayload,
     EventErrorPayload,
-    EventResetPayload,
     FileBox, RoomMemberPayload, RoomPayload, RoomInvitationPayload,
     RoomQueryFilter, FriendshipPayload, ContactPayload, MessagePayload,
     MessageQueryFilter,
@@ -62,6 +61,11 @@ from wechaty_puppet import (    # type: ignore
     PuppetOptions,
     MiniProgramPayload,
     UrlLinkPayload
+)
+
+from .config import (
+    WECHATY_PUPPET_HOSTIE_TOKEN,
+    WECHATY_PUPPET_HOSTIE_ENDPOINT
 )
 
 log = logging.getLogger('HostiePuppet')
@@ -75,12 +79,21 @@ class HostiePuppet(Puppet):
 
     def __init__(self, options: PuppetOptions, name: str = 'hostie_puppet'):
         super(HostiePuppet, self).__init__(options, name)
-        # self.channel: Channel = None
-        # self.puppet_stub: PuppetStub = None
+
+        if options.token is None :
+            if WECHATY_PUPPET_HOSTIE_TOKEN is None:
+                raise Exception('wechaty-puppet-hostie: token not found.')
+            options.token = WECHATY_PUPPET_HOSTIE_TOKEN
+
+        if options.end_point is None \
+                and WECHATY_PUPPET_HOSTIE_ENDPOINT is not None:
+            options.end_point = WECHATY_PUPPET_HOSTIE_ENDPOINT
 
         self.channel, self.puppet_stub = self.init_puppet()
 
         self._event_stream: AsyncIOEventEmitter = AsyncIOEventEmitter()
+
+        self.login_user_id: Optional[str] = None
 
     async def room_list(self) -> List[str]:
         """
@@ -507,10 +520,10 @@ class HostiePuppet(Puppet):
 
     async def contact_self_qr_code(self) -> str:
         """
-
         :return:
         """
-        return ''
+        response = await self.puppet_stub.contact_self_q_r_code()
+        return response.qrcode
 
     async def contact_self_name(self, name: str):
         """
@@ -566,67 +579,111 @@ class HostiePuppet(Puppet):
         return response.member_ids
 
     async def room_add(self, room_id: str, contact_id: str):
-        pass
-
-    async def room_delete(self, room_id: str, contact_id: str):
-        pass
-
-    async def room_quit(self, room_id: str):
-        pass
-
-    async def room_topic(self, room_id: str, new_topic: str):
-        pass
-
-    async def room_announce(self, room_id: str,
-                            announcement: str = None) -> str:
         """
-
-        :param room_id:
-        :param announcement:
-        :return:
-        """
-        return ''
-
-    async def room_qr_code(self, room_id: str) -> str:
-        """
-
-        :param room_id:
-        :return:
-        """
-        return ''
-
-    async def room_member_payload(self, room_id: str,
-                                  contact_id: str) -> RoomMemberPayload:
-        """
-
+        add contact to room
         :param room_id:
         :param contact_id:
         :return:
         """
+        await self.puppet_stub.room_add(id=room_id, contact_id=contact_id)
+
+    async def room_delete(self, room_id: str, contact_id: str):
+        """
+        delete contact from room
+        :param room_id:
+        :param contact_id:
+        :return:
+        """
+        await self.puppet_stub.room_del(id=room_id, contact_id=contact_id)
+
+    async def room_quit(self, room_id: str):
+        """
+        quit from room
+        :param room_id:
+        :return:
+        """
+        await self.puppet_stub.room_quit(id=room_id)
+
+    async def room_topic(self, room_id: str, new_topic: str):
+        """
+        set/set topic of the room
+        :param room_id:
+        :param new_topic:
+        :return:
+        """
+        await self.puppet_stub.room_topic(id=room_id, topic=new_topic)
+
+    async def room_announce(self, room_id: str,
+                            announcement: str = None) -> str:
+        """
+        get/set announce
+        :param room_id:
+        :param announcement:
+        :return:
+        """
+        room_announce_response = await self.puppet_stub.room_announce(
+            id=room_id, text=announcement)
+        if announcement is None and room_announce_response.text is not None:
+            # get the announcement
+            return room_announce_response.text
+        if announcement is not None and room_announce_response.text is None:
+            return announcement
+        return ''
+
+    async def room_qr_code(self, room_id: str) -> str:
+        """
+        get room qr_code
+        :param room_id:
+        :return:
+        """
+        room_qr_code_response = await \
+            self.puppet_stub.room_q_r_code(id=room_id)
+        return room_qr_code_response.qrcode
+
+    async def room_member_payload(self, room_id: str,
+                                  contact_id: str) -> RoomMemberPayload:
+        """
+        get room member payload
+        :param room_id:
+        :param contact_id:
+        :return:
+        """
+        member_payload = await self.puppet_stub.room_member_payload(
+            id=room_id, member_id=contact_id)
+        return member_payload
 
     async def room_avatar(self, room_id: str) -> FileBox:
-        pass
+        """
+        get room avatar
+        :param room_id:
+        :return:
+        """
+        room_avatar_response = await self.puppet_stub.room_avatar(id=room_id)
+        # TODO -> get room_avatar
+        file_box = FileBox.from_base64(room_avatar_response.filebox)
+        return file_box
 
     def init_puppet(self) -> Tuple[Channel, PuppetStub]:
         """
         start puppet channelcontact_self_qr_code
         """
-        response = requests.get(
-            f'https://api.chatie.io/v0/hosties/{self.options.token}'
-        )
+        if self.options.end_point is None:
+            response = requests.get(
+                f'https://api.chatie.io/v0/hosties/{self.options.token}'
+            )
 
-        if response.status_code != 200:
-            raise Exception('hostie server is invalid ... ')
+            if response.status_code != 200:
+                raise Exception('hostie server is invalid ... ')
 
-        data = response.json()
-        if 'ip' not in data or data['ip'] == '0.0.0.0':
-            raise Exception("can't find hostie server address")
+            data = response.json()
+            if 'ip' not in data or data['ip'] == '0.0.0.0':
+                raise Exception("can't find hostie server address")
+            log.debug('get puppet ip address : <%s>', data)
+            self.options.end_point = data['ip']
         log.info('init puppet hostie')
-        log.debug('get puppet ip address : <%s>', data)
 
-        channel = Channel(host=data['ip'], port=8788)
+        channel = Channel(host=self.options.end_point, port=8788)
         puppet_stub = PuppetStub(channel)
-        # try to restart puppet_stub
         return channel, puppet_stub
 
     async def start(self) -> None:
@@ -634,23 +691,6 @@ class HostiePuppet(Puppet):
         start puppet_stub
         :return:
         """
-        # await self.puppet_stub.stop()
-        # loop = asyncio.get_event_loop()
-        # loop.run_forever()
-        #
-        # loop.run_until_complete(self.puppet_stub.start(), self._listen_for_event())
-
-        # await asyncio.gather(
-        #     self.puppet_stub.start(),
-        #     self._listen_for_event()
-        # )
-        # loop = asyncio.get_running_loop()
-        #
-        # asyncio.run_coroutine_threadsafe(
-        #     self.puppet_stub.start(),
-        #     loop
-        # )
-        log.info('stopping the puppet ...')
         await self.puppet_stub.stop()
         log.info('starting the puppet ...')
         await self.puppet_stub.start()
@@ -662,9 +702,37 @@ class HostiePuppet(Puppet):
         """
         stop the grpc channel connection
         """
+        log.info('stop()')
 
+        self._event_stream.remove_all_listeners()
+        self._event_stream = None
         await self.puppet_stub.stop()
         await self.channel.close()
+
+    async def logout(self):
+        """
+        logout the account
+        :return:
+        """
+        log.info('logout()')
+        if self.login_user_id is None:
+            raise Exception('logout before login?')
+
+        try:
+            await self.puppet_stub.logout()
+        # pylint: disable=W0703
+        except Exception as exception:
+            log.error('logout() rejection %s', exception)
+        finally:
+            payload = EventLogoutPayload(contact_id=self.login_user_id)
+            self._event_stream.emit('logout', payload)
+            self.login_user_id = None
+
+    async def login(self):
+        """
+        login the account
+        :return:
+        """
 
     async def ding(self, data: Optional[str] = ''):
         """
@@ -686,7 +754,7 @@ class HostiePuppet(Puppet):
             if response is not None:
                 payload_data: dict = json.loads(response.payload)
                 if response.type == int(EventType.EVENT_TYPE_SCAN):
-                    log.debug('receiving scan info <%s>', response)
+                    log.debug('receive scan info <%s>', payload_data)
                     # create qr_code
                     payload = EventScanPayload(
                         status=ScanStatus(payload_data['status']),
@@ -696,68 +764,92 @@ class HostiePuppet(Puppet):
                     self._event_stream.emit('scan', payload)
 
                 elif response.type == int(EventType.EVENT_TYPE_DONG):
-                    log.debug('receiving dong info <%s>', response)
+                    log.debug('receive dong info <%s>', payload_data)
                     payload = EventDongPayload(**payload_data)
                     self._event_stream.emit('dong', payload)
 
                 elif response.type == int(EventType.EVENT_TYPE_MESSAGE):
                     # payload = get_message_payload_from_response(response)
-                    log.debug('receiving message info <%s>', response)
+                    log.debug('receive message info <%s>', payload_data)
                     event_message_payload = EventMessagePayload(
                         message_id=payload_data['messageId'])
                     self._event_stream.emit('message', event_message_payload)
 
                 elif response.type == int(EventType.EVENT_TYPE_HEARTBEAT):
-                    log.debug('receving heartbeat info <%s>', response)
+                    log.debug('receive heartbeat info <%s>', payload_data)
                     payload = EventHeartbeatPayload(**payload_data)
                     self._event_stream.emit('heartbeat', payload)
 
                 elif response.type == int(EventType.EVENT_TYPE_ERROR):
-                    log.info('receving error info <%s>', response)
+                    log.info('receive error info <%s>', payload_data)
                     payload = EventErrorPayload(**payload_data)
                     self._event_stream.emit('error', payload)
 
                 elif response.type == int(EventType.EVENT_TYPE_FRIENDSHIP):
-                    payload = EventFriendshipPayload(**payload_data)
+                    log.debug('receive friendship info <%s>', payload_data)
+                    payload = EventFriendshipPayload(
+                        friendship_id=payload_data.get('friendshipId')
+                    )
                     self._event_stream.emit('friendship', payload)
 
                 elif response.type == int(EventType.EVENT_TYPE_ROOM_JOIN):
-                    payload = EventRoomJoinPayload(**payload_data)
+                    log.debug('receive room-join info <%s>', payload_data)
+                    payload = EventRoomJoinPayload(
+                        invited_ids=payload_data.get('inviteeIdList', []),
+                        inviter_id=payload_data.get('inviterId'),
+                        room_id=payload_data.get('roomId'),
+                        time_stamp=payload_data.get('timestamp')
+                    )
                     self._event_stream.emit('room-join', payload)
 
                 elif response.type == int(EventType.EVENT_TYPE_ROOM_INVITE):
-                    payload = EventRoomInvitePayload(**payload_data)
+                    log.debug('receive room-invite info <%s>', payload_data)
+                    payload = EventRoomInvitePayload(
+                        room_invitation_id=payload_data.get(
+                            'roomInvitationId', None)
+                    )
                     self._event_stream.emit('room-invite', payload)
 
                 elif response.type == int(EventType.EVENT_TYPE_ROOM_LEAVE):
-                    payload = EventRoomLeavePayload(**payload_data)
+                    log.debug('receive room-leave info <%s>', payload_data)
+                    payload = EventRoomLeavePayload(
+                        removed_ids=payload_data.get('removeeIdList', []),
+                        remover_id=payload_data.get('removerId'),
+                        room_id=payload_data.get('removerId'),
+                        time_stamp=payload_data.get('timestamp')
+                    )
                     self._event_stream.emit('room-leave', payload)
 
                 elif response.type == int(EventType.EVENT_TYPE_ROOM_TOPIC):
-                    payload = EventRoomTopicPayload(**payload_data)
-                    self._event_stream.emit('room-topic', payload)
-
-                elif response.type == int(EventType.EVENT_TYPE_ROOM_TOPIC):
-                    payload = EventRoomTopicPayload(**payload_data)
+                    log.debug('receive room-topic info <%s>', payload_data)
+                    payload = EventRoomTopicPayload(
+                        changer_id=payload_data.get('changerId'),
+                        new_topic=payload_data.get('newTopic'),
+                        old_topic=payload_data.get('oldTopic'),
+                        room_id=payload_data.get('roomId'),
+                        time_stamp=payload_data.get('timestamp')
+                    )
                     self._event_stream.emit('room-topic', payload)
 
                 elif response.type == int(EventType.EVENT_TYPE_READY):
+                    log.debug('receive ready info <%s>', payload_data)
                     payload = EventReadyPayload(**payload_data)
                     self._event_stream.emit('ready', payload)
 
-                elif response.type == int(EventType.EVENT_TYPE_RESET):
-                    payload = EventResetPayload(**payload_data)
-                    self._event_stream.emit('reset', payload)
-
                 elif response.type == int(EventType.EVENT_TYPE_LOGIN):
+                    log.debug('receive login info <%s>', payload_data)
                     event_login_payload = EventLoginPayload(
                         contact_id=payload_data['contactId'])
+                    self.login_user_id = payload_data.get('contactId', None)
                     self._event_stream.emit('login', event_login_payload)
 
                 elif response.type == int(EventType.EVENT_TYPE_LOGOUT):
+                    log.debug('receive logout info <%s>', payload_data)
                     payload = EventLogoutPayload(
-                        contact_id=payload_data['contactId']
+                        contact_id=payload_data['contactId'],
+                        data=payload_data.get('data', None)
                     )
+                    self.login_user_id = None
                     self._event_stream.emit('logout', payload)
 
                 elif response.type == int(EventType.EVENT_TYPE_UNSPECIFIED):
