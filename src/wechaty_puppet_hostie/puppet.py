@@ -86,7 +86,7 @@ class HostiePuppet(Puppet):
             options.token = WECHATY_PUPPET_HOSTIE_TOKEN
 
         if options.end_point is None \
-            and WECHATY_PUPPET_HOSTIE_ENDPOINT is not None:
+                and WECHATY_PUPPET_HOSTIE_ENDPOINT is not None:
             options.end_point = WECHATY_PUPPET_HOSTIE_ENDPOINT
 
         self.channel, self.puppet_stub = self.init_puppet()
