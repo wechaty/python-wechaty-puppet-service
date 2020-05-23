@@ -782,7 +782,7 @@ class HostiePuppet(Puppet):
                     #   Workaround for additional server json payload key: timeout
                     if 'timeout' in payload_data:
                         del payload_data['key']
-                    
+
                     payload = EventHeartbeatPayload(**payload_data)
                     self._event_stream.emit('heartbeat', payload)
 
