@@ -777,6 +777,12 @@ class HostiePuppet(Puppet):
 
                 elif response.type == int(EventType.EVENT_TYPE_HEARTBEAT):
                     log.debug('receive heartbeat info <%s>', payload_data)
+                    # Huan(202005) FIXME:
+                    #   https://github.com/wechaty/python-wechaty-puppet/issues/6
+                    #   Workaround for unexpected server json payload key: timeout
+                    if 'timeout' in payload_data:
+                        del payload_data['timeout']
+
                     payload = EventHeartbeatPayload(**payload_data)
                     self._event_stream.emit('heartbeat', payload)
 
