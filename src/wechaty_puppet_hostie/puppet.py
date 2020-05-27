@@ -667,6 +667,7 @@ class HostiePuppet(Puppet):
         """
         start puppet channelcontact_self_qr_code
         """
+        port = 8788
         if self.options.end_point is None:
             response = requests.get(
                 f'https://api.chatie.io/v0/hosties/{self.options.token}'
@@ -678,11 +679,13 @@ class HostiePuppet(Puppet):
             data = response.json()
             if 'ip' not in data or data['ip'] == '0.0.0.0':
                 raise Exception("can't find hostie server address")
+            if 'port' in data:
+                port = data['port']
             log.debug('get puppet ip address : <%s>', data)
             self.options.end_point = data['ip']
         log.info('init puppet hostie')
 
-        channel = Channel(host=self.options.end_point, port=8788)
+        channel = Channel(host=self.options.end_point, port=port)
         puppet_stub = PuppetStub(channel)
         return channel, puppet_stub
 
