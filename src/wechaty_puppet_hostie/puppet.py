@@ -33,7 +33,7 @@ from grpclib.client import Channel
 # pylint: disable=E0401
 from pyee import AsyncIOEventEmitter  # type: ignore
 
-from wechaty_puppet import (    # type: ignore
+from wechaty_puppet import (  # type: ignore
     EventScanPayload,
     ScanStatus,
 
@@ -57,6 +57,7 @@ from wechaty_puppet import (    # type: ignore
 
     ImageType,
     EventType,
+    MessageType,
     Puppet,
     PuppetOptions,
     MiniProgramPayload,
@@ -71,6 +72,74 @@ from .config import (
 log = logging.getLogger('HostiePuppet')
 
 
+def _map_message_type(message_payload: MessagePayload) -> MessagePayload:
+    """
+    get messageType value which is ts-wechaty-puppet type from hostie server,
+        but is MessageType. so we should map it to MessageType from chatie-grpc
+    target MessageType Enum:
+        MESSAGE_TYPE_UNSPECIFIED  = 0;
+
+       MESSAGE_TYPE_ATTACHMENT   = 1;
+       MESSAGE_TYPE_AUDIO        = 2;
+       MESSAGE_TYPE_CONTACT      = 3;
+       MESSAGE_TYPE_EMOTICON     = 4;
+       MESSAGE_TYPE_IMAGE        = 5;
+       MESSAGE_TYPE_TEXT         = 6;
+       MESSAGE_TYPE_VIDEO        = 7;
+       MESSAGE_TYPE_CHAT_HISTORY = 8;
+       MESSAGE_TYPE_LOCATION     = 9;
+       MESSAGE_TYPE_MINI_PROGRAM = 10;
+       MESSAGE_TYPE_TRANSFER     = 11;
+       MESSAGE_TYPE_RED_ENVELOPE = 12;
+       MESSAGE_TYPE_RECALLED     = 13;
+       MESSAGE_TYPE_URL          = 14;
+
+    source MessageType Enum:
+        export enum MessageType {
+          Unknown = 0,
+
+          Attachment=1,     // Attach(6),
+          Audio=2,          // Audio(1), Voice(34)
+          Contact=3,        // ShareCard(42)
+          ChatHistory=4,    // ChatHistory(19)
+          Emoticon=5,       // Sticker: Emoticon(15), Emoticon(47)
+          Image=6,          // Img(2), Image(3)
+          Text=7,           // Text(1)
+          Location=8,       // Location(48)
+          MiniProgram=9,    // MiniProgram(33)
+          GroupNote=10,      // GroupNote(53)
+          Transfer=11,       // Transfers(2000)
+          RedEnvelope=12,    // RedEnvelopes(2001)
+          Recalled=13,       // Recalled(10002)
+          Url=14,            // Url(5)
+          Video=15,          // Video(4), Video(43)
+        }
+    :return:
+
+    #
+    """
+    if isinstance(message_payload.type, int):
+        map_container: List[MessageType] = [
+            MessageType.MESSAGE_TYPE_UNSPECIFIED,
+            MessageType.MESSAGE_TYPE_ATTACHMENT,
+            MessageType.MESSAGE_TYPE_AUDIO,
+            MessageType.MESSAGE_TYPE_CONTACT,
+            MessageType.MESSAGE_TYPE_CHAT_HISTORY,
+            MessageType.MESSAGE_TYPE_EMOTICON,
+            MessageType.MESSAGE_TYPE_IMAGE,
+            MessageType.MESSAGE_TYPE_TEXT,
+            MessageType.MESSAGE_TYPE_LOCATION,
+            MessageType.MESSAGE_TYPE_MINI_PROGRAM,
+            MessageType.MESSAGE_TYPE_UNSPECIFIED,
+            MessageType.MESSAGE_TYPE_TRANSFER,
+            MessageType.MESSAGE_TYPE_RED_ENVELOPE,
+            MessageType.MESSAGE_TYPE_RECALLED,
+            MessageType.MESSAGE_TYPE_URL,
+            MessageType.MESSAGE_TYPE_VIDEO]
+        message_payload.type = map_container[message_payload.type]
+    return message_payload
+
+
 # pylint: disable=R0904
 class HostiePuppet(Puppet):
     """
@@ -80,7 +149,7 @@ class HostiePuppet(Puppet):
     def __init__(self, options: PuppetOptions, name: str = 'hostie_puppet'):
         super(HostiePuppet, self).__init__(options, name)
 
-        if options.token is None :
+        if options.token is None:
             if WECHATY_PUPPET_HOSTIE_TOKEN is None:
                 raise Exception('wechaty-puppet-hostie: token not found.')
             options.token = WECHATY_PUPPET_HOSTIE_TOKEN
