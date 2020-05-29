@@ -377,7 +377,7 @@ class HostiePuppet(Puppet):
         :return:
         """
         response = await self.puppet_stub.message_payload(id=message_id)
-        return response
+        return _map_message_type(response)
 
     async def message_forward(self, to_id: str, message_id: str):
         """
