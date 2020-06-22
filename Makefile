@@ -29,7 +29,7 @@ lint: pylint pycodestyle flake8 mypy pytype
 pylint:
 	pylint \
 		--load-plugins pylint_quotes \
-		--disable W0511 \
+		--disable W0511,C0302 \
 		$(SOURCE_GLOB)
 
 .PHONY: pycodestyle

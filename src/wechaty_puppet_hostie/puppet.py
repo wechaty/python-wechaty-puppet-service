@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Optional, List, Tuple
+from typing import Optional, List
 import requests
 
 from chatie_grpc.wechaty import (  # type: ignore
@@ -158,7 +158,8 @@ class HostiePuppet(Puppet):
                 and WECHATY_PUPPET_HOSTIE_ENDPOINT is not None:
             options.end_point = WECHATY_PUPPET_HOSTIE_ENDPOINT
 
-        self.channel, self.puppet_stub = self.init_puppet()
+        self.channel: Optional[Channel] = None
+        self.puppet_stub: Optional[PuppetStub] = None
 
         self._event_stream: AsyncIOEventEmitter = AsyncIOEventEmitter()
 
@@ -169,6 +170,8 @@ class HostiePuppet(Puppet):
         get all room list
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         response = await self.puppet_stub.room_list()
         if response is None:
             raise ValueError('can"t get room_list response')
@@ -182,7 +185,8 @@ class HostiePuppet(Puppet):
         :param image_type:
         :return:
         """
-
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         response = await self.puppet_stub.message_image(
             id=message_id,
             type=image_type)
@@ -215,6 +219,8 @@ class HostiePuppet(Puppet):
         get contact list
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         response = await self.puppet_stub.contact_list()
         if response is None:
             # TODO -> need to refactor the raised error
@@ -227,6 +233,8 @@ class HostiePuppet(Puppet):
         :param tag_id:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         await self.puppet_stub.tag_contact_delete(id=tag_id)
         return None
 
@@ -246,6 +254,8 @@ class HostiePuppet(Puppet):
         :param contact_id:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         await self.puppet_stub.tag_contact_add(
             id=tag_id, contact_id=contact_id)
 
@@ -257,7 +267,6 @@ class HostiePuppet(Puppet):
         :return:
         """
         # chatie_grpc has not implement this function
-        return
 
     async def tag_contact_remove(self, tag_id: str, contact_id: str):
         """
@@ -266,6 +275,8 @@ class HostiePuppet(Puppet):
         :param contact_id:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         await self.puppet_stub.tag_contact_remove(
             id=tag_id,
             contact_id=contact_id)
@@ -277,6 +288,8 @@ class HostiePuppet(Puppet):
         :param contact_id:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         response = await self.puppet_stub.tag_contact_list(
             contact_id=contact_id)
         return response.ids
@@ -290,6 +303,8 @@ class HostiePuppet(Puppet):
         :param mention_ids:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         response = await self.puppet_stub.message_send_text(
             conversation_id=conversation_id,
             text=message, mentonal_ids=mention_ids)
@@ -303,6 +318,8 @@ class HostiePuppet(Puppet):
         :param conversation_id:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         response = await self.puppet_stub.message_send_contact(
             conversation_id=conversation_id,
             contact_id=contact_id
@@ -317,6 +334,8 @@ class HostiePuppet(Puppet):
         :param file:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         response = await self.puppet_stub.message_send_file(
             conversation_id=conversation_id,
             filebox=file.to_json_str()
@@ -330,6 +349,8 @@ class HostiePuppet(Puppet):
         :param url:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         response = await self.puppet_stub.message_send_url(
             conversation_id=conversation_id,
             url_link=url
@@ -345,6 +366,8 @@ class HostiePuppet(Puppet):
         :param mini_program:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         response = await self.puppet_stub.message_send_mini_program(
             conversation_id=conversation_id,
             # TODO -> check mini_program key
@@ -367,6 +390,8 @@ class HostiePuppet(Puppet):
         :param message_id:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         response = await self.puppet_stub.message_recall(id=message_id)
         return response.success
 
@@ -376,8 +401,11 @@ class HostiePuppet(Puppet):
         :param message_id:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         response = await self.puppet_stub.message_payload(id=message_id)
-        return response
+
+        return _map_message_type(response)
 
     async def message_forward(self, to_id: str, message_id: str):
         """
@@ -396,8 +424,17 @@ class HostiePuppet(Puppet):
         :param message_id:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         response = await self.puppet_stub.message_file(id=message_id)
-        return FileBox.from_base64(response.filebox)
+        json_response = json.loads(response.filebox)
+        if 'base64' not in json_response:
+            raise Exception('file response data structure is not correct')
+        file_box = FileBox.from_base64(
+            json_response['base64'],
+            name=json_response['name']
+        )
+        return file_box
 
     async def message_contact(self, message_id: str) -> str:
         """
@@ -405,6 +442,8 @@ class HostiePuppet(Puppet):
         :param message_id:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         response = await self.puppet_stub.message_contact(id=message_id)
         return response.id
 
@@ -414,6 +453,8 @@ class HostiePuppet(Puppet):
         :param message_id:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         response = await self.puppet_stub.message_url(id=message_id)
         return UrlLinkPayload(url=response.url_link)
 
@@ -436,6 +477,8 @@ class HostiePuppet(Puppet):
         :param alias:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         response = await self.puppet_stub.contact_alias(
             id=contact_id, alias=alias)
         if response.alias is None and alias is None:
@@ -455,6 +498,8 @@ class HostiePuppet(Puppet):
         :param contact_id:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         response = await self.puppet_stub.contact_payload(id=contact_id)
         return response
 
@@ -466,6 +511,8 @@ class HostiePuppet(Puppet):
         :param file_box:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         response = await self.puppet_stub.contact_avatar(
             id=contact_id, filebox=file_box)
         return FileBox.from_base64(response.filebox)
@@ -476,6 +523,8 @@ class HostiePuppet(Puppet):
         :param contact_id:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         response = await self.puppet_stub.tag_contact_list(
             contact_id=contact_id)
         return response.ids
@@ -496,6 +545,9 @@ class HostiePuppet(Puppet):
         :param phone:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
+
         if weixin is not None:
             weixin_response = await self.puppet_stub.friendship_search_weixin(
                 weixin=weixin
@@ -517,6 +569,8 @@ class HostiePuppet(Puppet):
         :param hello:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         await self.puppet_stub.friendship_add(
             contact_id=contact_id,
             hello=hello
@@ -531,6 +585,8 @@ class HostiePuppet(Puppet):
         :param payload:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         response = await self.puppet_stub.friendship_payload(
             id=friendship_id, payload=json.dumps(payload)
         )
@@ -542,6 +598,8 @@ class HostiePuppet(Puppet):
         :param friendship_id:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         await self.puppet_stub.friendship_accept(id=friendship_id)
 
     async def room_create(self, contact_ids: List[str], topic: str = None
@@ -552,6 +610,8 @@ class HostiePuppet(Puppet):
         :param topic:
         :return: created room_id
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         response = await self.puppet_stub.room_create(
             contact_ids=contact_ids,
             topic=topic
@@ -560,12 +620,15 @@ class HostiePuppet(Puppet):
 
     async def room_search(self, query: RoomQueryFilter = None) -> List[str]:
         """
-        # TODO -> search function should be wechaty module
+        find the room_ids
         search room
         :param query:
         :return:
         """
-        return []
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
+        room_list_response = await self.puppet_stub.room_list()
+        return room_list_response.ids
 
     async def room_invitation_payload(self,
                                       room_invitation_id: str,
@@ -574,6 +637,8 @@ class HostiePuppet(Puppet):
         """
         get room_invitation_payload
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         response = await self.puppet_stub.room_invitation_payload(
             id=room_invitation_id,
             payload=payload
@@ -582,24 +647,33 @@ class HostiePuppet(Puppet):
 
     async def room_invitation_accept(self, room_invitation_id: str):
         """
-
+        accept the room invitation
         :param room_invitation_id:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
+        await self.puppet_stub.room_invitation_accept(id=room_invitation_id)
 
     async def contact_self_qr_code(self) -> str:
         """
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
+
         response = await self.puppet_stub.contact_self_q_r_code()
         return response.qrcode
 
     async def contact_self_name(self, name: str):
         """
-
+        set the name of the contact
         :param name:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
+        await self.puppet_stub.contact_self_name(name=name)
 
     async def contact_signature(self, signature: str):
         """
@@ -635,6 +709,8 @@ class HostiePuppet(Puppet):
         :param room_id:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         response = await self.puppet_stub.room_payload(id=room_id)
         return response
 
@@ -644,6 +720,8 @@ class HostiePuppet(Puppet):
         :param room_id:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         response = await self.puppet_stub.room_member_list(id=room_id)
         return response.member_ids
 
@@ -654,6 +732,8 @@ class HostiePuppet(Puppet):
         :param contact_id:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         await self.puppet_stub.room_add(id=room_id, contact_id=contact_id)
 
     async def room_delete(self, room_id: str, contact_id: str):
@@ -663,6 +743,8 @@ class HostiePuppet(Puppet):
         :param contact_id:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         await self.puppet_stub.room_del(id=room_id, contact_id=contact_id)
 
     async def room_quit(self, room_id: str):
@@ -671,6 +753,8 @@ class HostiePuppet(Puppet):
         :param room_id:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         await self.puppet_stub.room_quit(id=room_id)
 
     async def room_topic(self, room_id: str, new_topic: str):
@@ -680,6 +764,8 @@ class HostiePuppet(Puppet):
         :param new_topic:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         await self.puppet_stub.room_topic(id=room_id, topic=new_topic)
 
     async def room_announce(self, room_id: str,
@@ -690,6 +776,8 @@ class HostiePuppet(Puppet):
         :param announcement:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         room_announce_response = await self.puppet_stub.room_announce(
             id=room_id, text=announcement)
         if announcement is None and room_announce_response.text is not None:
@@ -705,6 +793,9 @@ class HostiePuppet(Puppet):
         :param room_id:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
+
         room_qr_code_response = await \
             self.puppet_stub.room_q_r_code(id=room_id)
         return room_qr_code_response.qrcode
@@ -717,6 +808,9 @@ class HostiePuppet(Puppet):
         :param contact_id:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
+
         member_payload = await self.puppet_stub.room_member_payload(
             id=room_id, member_id=contact_id)
         return member_payload
@@ -727,15 +821,19 @@ class HostiePuppet(Puppet):
         :param room_id:
         :return:
         """
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
+
         room_avatar_response = await self.puppet_stub.room_avatar(id=room_id)
         # TODO -> get room_avatar
         file_box = FileBox.from_base64(room_avatar_response.filebox)
         return file_box
 
-    def init_puppet(self) -> Tuple[Channel, PuppetStub]:
+    def _init_puppet(self):
         """
-        start puppet channelcontact_self_qr_code
+        start puppet channel contact_self_qr_code
         """
+        log.info('init puppet')
         port = 8788
         if self.options.end_point is None:
             response = requests.get(
@@ -754,16 +852,19 @@ class HostiePuppet(Puppet):
             self.options.end_point = data['ip']
         log.info('init puppet hostie')
 
-        channel = Channel(host=self.options.end_point, port=port)
-        puppet_stub = PuppetStub(channel)
-        return channel, puppet_stub
+        self.channel = Channel(host=self.options.end_point, port=port)
+        self.puppet_stub = PuppetStub(self.channel)
 
     async def start(self) -> None:
         """
         start puppet_stub
         :return:
         """
-        await self.puppet_stub.stop()
+        self._init_puppet()
+
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
+
         log.info('starting the puppet ...')
         await self.puppet_stub.start()
         log.info('puppet has started ...')
@@ -775,11 +876,12 @@ class HostiePuppet(Puppet):
         stop the grpc channel connection
         """
         log.info('stop()')
-
         self._event_stream.remove_all_listeners()
-        self._event_stream = None
         await self.puppet_stub.stop()
         await self.channel.close()
+
+        self.puppet_stub = None
+        self.channel = None
 
     async def logout(self):
         """
@@ -813,6 +915,9 @@ class HostiePuppet(Puppet):
         :return:
         """
         log.debug('send ding info to hostie ...')
+
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
         await self.puppet_stub.ding(data=data)
 
     # pylint: disable=R0912,R0915
@@ -822,6 +927,9 @@ class HostiePuppet(Puppet):
         """
         # listen event from grpclib
         log.info('listening the event from the puppet ...')
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
+
         async for response in self.puppet_stub.event():
             if response is not None:
                 payload_data: dict = json.loads(response.payload)
