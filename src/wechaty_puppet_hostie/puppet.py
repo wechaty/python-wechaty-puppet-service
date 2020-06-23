@@ -968,9 +968,9 @@ class HostiePuppet(Puppet):
                     # Huan(202005) FIXME:
                     #   https://github.com/wechaty/python-wechaty-puppet/issues/6
                     #   Workaround for unexpected server json payload key: timeout
-                    if 'timeout' in payload_data:
-                        del payload_data['timeout']
-
+                    # if 'timeout' in payload_data:
+                    #     del payload_data['timeout']
+                    payload_data = {'data': payload_data['data']}
                     payload = EventHeartbeatPayload(**payload_data)
                     self._event_stream.emit('heartbeat', payload)
 
