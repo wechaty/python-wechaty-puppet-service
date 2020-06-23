@@ -21,7 +21,6 @@ limitations under the License.
 from __future__ import annotations
 
 import json
-import logging
 from typing import Optional, List
 import requests
 
@@ -61,7 +60,9 @@ from wechaty_puppet import (  # type: ignore
     Puppet,
     PuppetOptions,
     MiniProgramPayload,
-    UrlLinkPayload
+    UrlLinkPayload,
+
+    get_logger
 )
 
 from .config import (
@@ -69,7 +70,7 @@ from .config import (
     WECHATY_PUPPET_HOSTIE_ENDPOINT
 )
 
-log = logging.getLogger('HostiePuppet')
+log = get_logger('HostiePuppet')
 
 
 def _map_message_type(message_payload: MessagePayload) -> MessagePayload:
