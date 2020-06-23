@@ -823,10 +823,17 @@ class HostiePuppet(Puppet):
         """
         if self.puppet_stub is None:
             raise Exception('puppet_stub should not be none')
-
         room_avatar_response = await self.puppet_stub.room_avatar(id=room_id)
-        # TODO -> get room_avatar
-        file_box = FileBox.from_base64(room_avatar_response.filebox)
+
+        file_box_data = json.loads(room_avatar_response.filebox)
+
+        if 'remoteUrl' not in file_box_data:
+            raise Exception('invalid room avatar response')
+
+        file_box = FileBox.from_url(
+            url=file_box_data['remoteUrl'],
+            name=f'avatar-{room_id}.jpeg'
+        )
         return file_box
 
     def _init_puppet(self):
