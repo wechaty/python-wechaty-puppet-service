@@ -194,7 +194,8 @@ class HostiePuppet(Puppet):
         if response is None:
             # TODO -> need to refactor the raised error
             raise ValueError('response is invalid')
-        return FileBox.from_base64(response.filebox)
+        json_response = json.loads(response.filebox)
+        return FileBox.from_json(obj=json_response)
 
     def on(self, event_name: str, caller):
         """
