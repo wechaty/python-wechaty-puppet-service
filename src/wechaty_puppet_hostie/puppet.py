@@ -592,7 +592,7 @@ class HostiePuppet(Puppet):
         response = await self.puppet_stub.friendship_payload(
             id=friendship_id, payload=json.dumps(payload)
         )
-        return FriendshipPayload(**response.to_dict())
+        return response
 
     async def friendship_accept(self, friendship_id: str):
         """
