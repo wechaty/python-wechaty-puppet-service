@@ -195,13 +195,7 @@ class HostiePuppet(Puppet):
             # TODO -> need to refactor the raised error
             raise ValueError('response is invalid')
         json_response = json.loads(response.filebox)
-        if 'base64' not in json_response:
-            raise Exception('file response data structure is not correct')
-        file_box = FileBox.from_base64(
-            json_response['base64'],
-            name=json_response['name']
-        )
-        return file_box
+        return FileBox.from_json(obj=json_response)
 
     def on(self, event_name: str, caller):
         """
