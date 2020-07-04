@@ -537,7 +537,7 @@ class HostiePuppet(Puppet):
             contact_id
         :return:
         """
-        return ''
+        return self.login_user_id
 
     async def friendship_search(self, weixin: Optional[str] = None,
                                 phone: Optional[str] = None) -> Optional[str]:
@@ -916,11 +916,14 @@ class HostiePuppet(Puppet):
             self._event_stream.emit('logout', payload)
             self.login_user_id = None
 
-    async def login(self):
+    async def login(self, user_id: str):
         """
         login the account
         :return:
         """
+        self.login_user_id = user_id
+        payload = EventLoginPayload(contact_id=user_id)
+        self._event_stream.emit('login', payload)
 
     async def ding(self, data: Optional[str] = ''):
         """
