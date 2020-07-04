@@ -875,7 +875,12 @@ class HostiePuppet(Puppet):
             raise Exception('puppet_stub should not be none')
 
         log.info('starting the puppet ...')
-        await self.puppet_stub.start()
+
+        try:
+            await self.puppet_stub.stop()
+        finally:
+            await self.puppet_stub.start()
+
         log.info('puppet has started ...')
         await self._listen_for_event()
         return None
