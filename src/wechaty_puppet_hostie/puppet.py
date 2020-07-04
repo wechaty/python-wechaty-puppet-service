@@ -21,7 +21,6 @@ limitations under the License.
 from __future__ import annotations
 
 import json
-import logging
 from typing import Optional, List
 import requests
 
@@ -61,7 +60,9 @@ from wechaty_puppet import (  # type: ignore
     Puppet,
     PuppetOptions,
     MiniProgramPayload,
-    UrlLinkPayload
+    UrlLinkPayload,
+
+    get_logger
 )
 
 from .config import (
@@ -69,7 +70,7 @@ from .config import (
     WECHATY_PUPPET_HOSTIE_ENDPOINT
 )
 
-log = logging.getLogger('HostiePuppet')
+log = get_logger('HostiePuppet')
 
 
 def _map_message_type(message_payload: MessagePayload) -> MessagePayload:
@@ -193,7 +194,8 @@ class HostiePuppet(Puppet):
         if response is None:
             # TODO -> need to refactor the raised error
             raise ValueError('response is invalid')
-        return FileBox.from_base64(response.filebox)
+        json_response = json.loads(response.filebox)
+        return FileBox.from_json(obj=json_response)
 
     def on(self, event_name: str, caller):
         """
@@ -590,7 +592,7 @@ class HostiePuppet(Puppet):
         response = await self.puppet_stub.friendship_payload(
             id=friendship_id, payload=json.dumps(payload)
         )
-        return FriendshipPayload(**response.to_dict())
+        return response
 
     async def friendship_accept(self, friendship_id: str):
         """
@@ -972,9 +974,9 @@ class HostiePuppet(Puppet):
                     # Huan(202005) FIXME:
                     #   https://github.com/wechaty/python-wechaty-puppet/issues/6
                     #   Workaround for unexpected server json payload key: timeout
-                    if 'timeout' in payload_data:
-                        del payload_data['timeout']
-
+                    # if 'timeout' in payload_data:
+                    #     del payload_data['timeout']
+                    payload_data = {'data': payload_data['data']}
                     payload = EventHeartbeatPayload(**payload_data)
                     self._event_stream.emit('heartbeat', payload)
 
