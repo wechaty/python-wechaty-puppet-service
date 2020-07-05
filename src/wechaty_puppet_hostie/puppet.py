@@ -537,6 +537,8 @@ class HostiePuppet(Puppet):
             contact_id
         :return:
         """
+        if not self.login_user_id:
+            raise ValueError('can"t call self_id() before logined')
         return self.login_user_id
 
     async def friendship_search(self, weixin: Optional[str] = None,
