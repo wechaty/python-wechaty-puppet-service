@@ -517,7 +517,7 @@ class HostiePuppet(Puppet):
             raise Exception('puppet_stub should not be none')
         response = await self.puppet_stub.contact_avatar(
             id=contact_id, filebox=file_box)
-        return FileBox.from_base64(response.filebox)
+        return FileBox.from_json(response.filebox)
 
     async def contact_tag_ids(self, contact_id: str) -> List[str]:
         """
