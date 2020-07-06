@@ -517,7 +517,7 @@ class HostiePuppet(Puppet):
             raise Exception('puppet_stub should not be none')
         response = await self.puppet_stub.contact_avatar(
             id=contact_id, filebox=file_box)
-        return FileBox.from_base64(response.filebox)
+        return FileBox.from_json(response.filebox)
 
     async def contact_tag_ids(self, contact_id: str) -> List[str]:
         """
@@ -537,7 +537,9 @@ class HostiePuppet(Puppet):
             contact_id
         :return:
         """
-        return ''
+        if not self.login_user_id:
+            raise ValueError('can"t call self_id() before logined')
+        return self.login_user_id
 
     async def friendship_search(self, weixin: Optional[str] = None,
                                 phone: Optional[str] = None) -> Optional[str]:
@@ -916,11 +918,14 @@ class HostiePuppet(Puppet):
             self._event_stream.emit('logout', payload)
             self.login_user_id = None
 
-    async def login(self):
+    async def login(self, user_id: str):
         """
         login the account
         :return:
         """
+        self.login_user_id = user_id
+        payload = EventLoginPayload(contact_id=user_id)
+        self._event_stream.emit('login', payload)
 
     async def ding(self, data: Optional[str] = ''):
         """
