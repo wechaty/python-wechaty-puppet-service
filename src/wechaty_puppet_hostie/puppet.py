@@ -682,7 +682,7 @@ class HostiePuppet(Puppet):
         if self.puppet_stub is None:
             raise Exception('puppet_stub should not be none')
 
-        response = await self.puppet_stub.contact_self_qr_code()
+        response = await self.puppet_stub.contact_self_q_r_code()
         return response.qrcode
 
     async def contact_self_name(self, name: str):
@@ -817,7 +817,7 @@ class HostiePuppet(Puppet):
             raise Exception('puppet_stub should not be none')
 
         room_qr_code_response = await \
-            self.puppet_stub.room_qr_code(id=room_id)
+            self.puppet_stub.room_q_r_code(id=room_id)
         return room_qr_code_response.qrcode
 
     async def room_member_payload(self, room_id: str,
