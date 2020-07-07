@@ -420,7 +420,7 @@ class HostiePuppet(Puppet):
         if payload.type == MessageType.MESSAGE_TYPE_TEXT:
             if not payload.text:
                 raise Exception('no text')
-            await  self.message_send_text(conversation_id=to_id, message=payload.text)
+            await self.message_send_text(conversation_id=to_id, message=payload.text)
             await self.puppet_stub.message_send_text(conversation_id=to_id, text=payload.text)
         elif payload.type == MessageType.MESSAGE_TYPE_URL:
             url_link = await self.message_url(message_id=message_id)
