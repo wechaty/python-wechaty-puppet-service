@@ -155,9 +155,8 @@ class HostiePuppet(Puppet):
                 raise Exception('wechaty-puppet-hostie: token not found.')
             options.token = WECHATY_PUPPET_HOSTIE_TOKEN
 
-        if options.end_point is None \
-                and WECHATY_PUPPET_HOSTIE_ENDPOINT is not None:
-            options.end_point = WECHATY_PUPPET_HOSTIE_ENDPOINT
+        self.end_point: str = WECHATY_PUPPET_HOSTIE_ENDPOINT or ''
+        self.port: int = 0
 
         self.channel: Optional[Channel] = None
         self.puppet_stub: Optional[PuppetStub] = None
@@ -845,7 +844,6 @@ class HostiePuppet(Puppet):
         start puppet channel contact_self_qr_code
         """
         log.info('init puppet')
-        port = 8788
         if self.options.end_point is None:
             response = requests.get(
                 f'https://api.chatie.io/v0/hosties/{self.options.token}'
@@ -858,12 +856,12 @@ class HostiePuppet(Puppet):
             if 'ip' not in data or data['ip'] == '0.0.0.0':
                 raise Exception("can't find hostie server address")
             if 'port' in data:
-                port = data['port']
+                self.port = data['port']
             log.debug('get puppet ip address : <%s>', data)
-            self.options.end_point = data['ip']
+            self.end_point = data['ip']
         log.info('init puppet hostie')
 
-        self.channel = Channel(host=self.options.end_point, port=port)
+        self.channel = Channel(host=self.end_point, port=self.port)
         self.puppet_stub = PuppetStub(self.channel)
 
     async def start(self) -> None:
@@ -894,7 +892,7 @@ class HostiePuppet(Puppet):
         log.info('stop()')
         self._event_stream.remove_all_listeners()
         await self.puppet_stub.stop()
-        await self.channel.close()
+        self.channel.close()
 
         self.puppet_stub = None
         self.channel = None
