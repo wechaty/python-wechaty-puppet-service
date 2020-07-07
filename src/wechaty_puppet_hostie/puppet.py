@@ -21,6 +21,7 @@ limitations under the License.
 from __future__ import annotations
 
 import json
+import re
 from typing import Optional, List
 import requests
 
@@ -155,8 +156,7 @@ class HostiePuppet(Puppet):
                 raise Exception('wechaty-puppet-hostie: token not found.')
             options.token = WECHATY_PUPPET_HOSTIE_TOKEN
 
-        if options.end_point is None \
-                and WECHATY_PUPPET_HOSTIE_ENDPOINT is not None:
+        if options.end_point is None and WECHATY_PUPPET_HOSTIE_ENDPOINT is not None:
             options.end_point = WECHATY_PUPPET_HOSTIE_ENDPOINT
 
         self.channel: Optional[Channel] = None
@@ -860,8 +860,9 @@ class HostiePuppet(Puppet):
         start puppet channel contact_self_qr_code
         """
         log.info('init puppet')
-        port = 8788
-        if self.options.end_point is None:
+        # otherwise load them from server by the token
+        if not self.options.end_point:
+            # Query the end_point by the token.
             response = requests.get(
                 f'https://api.chatie.io/v0/hosties/{self.options.token}'
             )
@@ -872,13 +873,17 @@ class HostiePuppet(Puppet):
             data = response.json()
             if 'ip' not in data or data['ip'] == '0.0.0.0':
                 raise Exception("can't find hostie server address")
-            if 'port' in data:
-                port = data['port']
+            if 'port' not in data:
+                raise Exception("can't find hostie server port")
             log.debug('get puppet ip address : <%s>', data)
-            self.options.end_point = data['ip']
-        log.info('init puppet hostie')
+            self.options.end_point = '{ip}:{port}'.format(**data)
 
-        self.channel = Channel(host=self.options.end_point, port=port)
+        if not re.match(r'^(?:(?!-)[\d\w-]{1,63}(?<!-)\.)+(?!-)[\d\w]{1,63}(?<!-):\d{2,5}$',
+                        self.options.end_point):
+            raise Exception('Malformed endpoint format, should be {hostname}:{port}')
+
+        host, port = self.options.end_point.split(':')
+        self.channel = Channel(host=host, port=port)
         self.puppet_stub = PuppetStub(self.channel)
 
     async def start(self) -> None:
@@ -909,7 +914,7 @@ class HostiePuppet(Puppet):
         log.info('stop()')
         self._event_stream.remove_all_listeners()
         await self.puppet_stub.stop()
-        await self.channel.close()
+        self.channel.close()
 
         self.puppet_stub = None
         self.channel = None
