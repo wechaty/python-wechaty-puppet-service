@@ -21,6 +21,7 @@ limitations under the License.
 from __future__ import annotations
 
 import json
+import re
 from typing import Optional, List
 import requests
 
@@ -863,7 +864,6 @@ class HostiePuppet(Puppet):
             log.debug('get puppet ip address : <%s>', data)
             self.options.end_point = '{ip}:{port}'.format(**data)
 
-        import re
         if not re.match(r'^(?:(?!-)[\d\w-]{1,63}(?<!-)\.)+(?!-)[\d\w]{1,63}(?<!-):\d{2,5}$',
                         self.options.end_point):
             raise Exception('Malformed endpoint format, should be {hostname}:{port}')
