@@ -844,7 +844,7 @@ class HostiePuppet(Puppet):
         start puppet channel contact_self_qr_code
         """
         log.info('init puppet')
-        if self.options.end_point is None:
+        if self.end_point is None:
             response = requests.get(
                 f'https://api.chatie.io/v0/hosties/{self.options.token}'
             )
