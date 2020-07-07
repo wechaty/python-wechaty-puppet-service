@@ -422,8 +422,8 @@ class HostiePuppet(Puppet):
                 raise Exception('no text')
             await self.message_send_text(conversation_id=to_id, message=payload.text)
         elif payload.type == MessageType.MESSAGE_TYPE_URL:
-            url_link = await self.message_url(message_id=message_id)
-            await self.message_send_url(conversation_id=to_id, url=url_link)
+            url_payload = await self.message_url(message_id=message_id)
+            await self.message_send_url(conversation_id=to_id, url=url_payload.thumbnailUrl)
         elif payload.type == MessageType.MESSAGE_TYPE_MINI_PROGRAM:
             mini_program = await self.message_mini_program(message_id=message_id)
             await self.message_send_mini_program(conversation_id=to_id, mini_program=mini_program)
