@@ -156,8 +156,7 @@ class HostiePuppet(Puppet):
                 raise Exception('wechaty-puppet-hostie: token not found.')
             options.token = WECHATY_PUPPET_HOSTIE_TOKEN
 
-        if options.end_point is None \
-            and WECHATY_PUPPET_HOSTIE_ENDPOINT is not None:
+        if options.end_point is None and WECHATY_PUPPET_HOSTIE_ENDPOINT is not None:
             options.end_point = WECHATY_PUPPET_HOSTIE_ENDPOINT
 
         self.channel: Optional[Channel] = None
