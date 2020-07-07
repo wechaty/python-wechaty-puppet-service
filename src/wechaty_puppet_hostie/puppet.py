@@ -427,11 +427,11 @@ class HostiePuppet(Puppet):
         elif payload.type == MessageType.MESSAGE_TYPE_URL:
             url_link = await self.message_url(message_id=message_id)
             await self.message_send_url(conversation_id=to_id, url=url_link)
-
+            
         elif payload.type == MessageType.MESSAGE_TYPE_MINI_PROGRAM:
             mini_program = await self.message_mini_program(message_id=message_id)
             await self.message_send_mini_program(conversation_id=to_id, mini_program=mini_program)
-            
+
         # TODO
         # elif payload.type == MessageType.MESSAGE_TYPE_EMOTICON:
         # elif payload.type == MessageType.MESSAGE_TYPE_AUDIO:
