@@ -23,6 +23,7 @@ from __future__ import annotations
 import json
 import re
 from typing import Optional, List
+from dataclasses import asdict
 import requests
 
 from chatie_grpc.wechaty import (  # type: ignore
@@ -373,7 +374,7 @@ class HostiePuppet(Puppet):
         response = await self.puppet_stub.message_send_mini_program(
             conversation_id=conversation_id,
             # TODO -> check mini_program key
-            mini_program=mini_program.thumb_url
+            mini_program=json.dumps(asdict(mini_program))
         )
         return response.id
 
@@ -432,6 +433,7 @@ class HostiePuppet(Puppet):
         # elif payload.type == MessageType.MESSAGE_TYPE_AUDIO:
         # elif payload.type == MessageType.ChatHistory:
         else:
+            await self.message_image()
             file_box = await self.message_file(message_id=message_id)
             await self.message_send_file(conversation_id=to_id, file=file_box)
 
@@ -481,6 +483,7 @@ class HostiePuppet(Puppet):
         :param message_id:
         :return:
         """
+        # TODO -> need to MiniProgram
         response = await self.puppet_stub.message_mini_program(id=message_id)
         response_dict = json.loads(response.mini_program)
         try:
