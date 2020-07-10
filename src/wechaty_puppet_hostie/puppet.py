@@ -433,7 +433,6 @@ class HostiePuppet(Puppet):
         # elif payload.type == MessageType.MESSAGE_TYPE_AUDIO:
         # elif payload.type == MessageType.ChatHistory:
         else:
-            await self.message_image()
             file_box = await self.message_file(message_id=message_id)
             await self.message_send_file(conversation_id=to_id, file=file_box)
 
@@ -484,11 +483,14 @@ class HostiePuppet(Puppet):
         :return:
         """
         # TODO -> need to MiniProgram
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
+
         response = await self.puppet_stub.message_mini_program(id=message_id)
         response_dict = json.loads(response.mini_program)
         try:
             mini_program = MiniProgramPayload(**response_dict)
-        except Exception as exception:
+        except Exception:
             raise ValueError(f'can"t init mini-program payload {response_dict}')
         return mini_program
 
