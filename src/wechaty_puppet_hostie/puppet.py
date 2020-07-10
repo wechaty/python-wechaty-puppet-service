@@ -466,10 +466,13 @@ class HostiePuppet(Puppet):
         :param message_id:
         :return:
         """
-        # TODO -> need to MiniProgram
-        # response = await self.puppet_stub.message_mini_program(id=message_id)
-        # return MiniProgramPayload(response.mini_program)
-        return MiniProgramPayload()
+        response = await self.puppet_stub.message_mini_program(id=message_id)
+        response_dict = json.loads(response.mini_program)
+        try:
+            mini_program = MiniProgramPayload(**response_dict)
+        except Exception as exception:
+            raise ValueError(f'can"t init mini-program payload {response_dict}')
+        return mini_program
 
     async def contact_alias(self, contact_id: str, alias: Optional[str] = None
                             ) -> str:
@@ -517,7 +520,7 @@ class HostiePuppet(Puppet):
             raise Exception('puppet_stub should not be none')
         response = await self.puppet_stub.contact_avatar(
             id=contact_id, filebox=file_box)
-        return FileBox.from_base64(response.filebox)
+        return FileBox.from_json(response.filebox)
 
     async def contact_tag_ids(self, contact_id: str) -> List[str]:
         """
@@ -537,7 +540,9 @@ class HostiePuppet(Puppet):
             contact_id
         :return:
         """
-        return ''
+        if not self.login_user_id:
+            raise ValueError('must login before get self_id')
+        return self.login_user_id
 
     async def friendship_search(self, weixin: Optional[str] = None,
                                 phone: Optional[str] = None) -> Optional[str]:
