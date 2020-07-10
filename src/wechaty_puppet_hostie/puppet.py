@@ -21,6 +21,7 @@ limitations under the License.
 from __future__ import annotations
 
 import json
+import re
 from typing import Optional, List
 import requests
 
@@ -155,8 +156,7 @@ class HostiePuppet(Puppet):
                 raise Exception('wechaty-puppet-hostie: token not found.')
             options.token = WECHATY_PUPPET_HOSTIE_TOKEN
 
-        if options.end_point is None \
-                and WECHATY_PUPPET_HOSTIE_ENDPOINT is not None:
+        if options.end_point is None and WECHATY_PUPPET_HOSTIE_ENDPOINT is not None:
             options.end_point = WECHATY_PUPPET_HOSTIE_ENDPOINT
 
         self.channel: Optional[Channel] = None
@@ -416,9 +416,24 @@ class HostiePuppet(Puppet):
         :param message_id:
         :return:
         """
-        # TODO -> we should get the type of the message, and forward the message
-        # to different conversation_id
-        # await self.puppet_stub.message_send_mini_program()
+        payload = await self.message_payload(message_id=message_id)
+        if payload.type == MessageType.MESSAGE_TYPE_TEXT:
+            if not payload.text:
+                raise Exception('no text')
+            await self.message_send_text(conversation_id=to_id, message=payload.text)
+        elif payload.type == MessageType.MESSAGE_TYPE_URL:
+            url_payload = await self.message_url(message_id=message_id)
+            await self.message_send_url(conversation_id=to_id, url=url_payload.url)
+        elif payload.type == MessageType.MESSAGE_TYPE_MINI_PROGRAM:
+            mini_program = await self.message_mini_program(message_id=message_id)
+            await self.message_send_mini_program(conversation_id=to_id, mini_program=mini_program)
+        # TODO
+        # elif payload.type == MessageType.MESSAGE_TYPE_EMOTICON:
+        # elif payload.type == MessageType.MESSAGE_TYPE_AUDIO:
+        # elif payload.type == MessageType.ChatHistory:
+        else:
+            file_box = await self.message_file(message_id=message_id)
+            await self.message_send_file(conversation_id=to_id, file=file_box)
 
     async def message_file(self, message_id: str) -> FileBox:
         """
@@ -541,7 +556,7 @@ class HostiePuppet(Puppet):
         :return:
         """
         if not self.login_user_id:
-            raise ValueError('must login before get self_id')
+            raise ValueError('can"t call self_id() before logined')
         return self.login_user_id
 
     async def friendship_search(self, weixin: Optional[str] = None,
@@ -848,8 +863,9 @@ class HostiePuppet(Puppet):
         start puppet channel contact_self_qr_code
         """
         log.info('init puppet')
-        port = 8788
-        if self.options.end_point is None:
+        # otherwise load them from server by the token
+        if not self.options.end_point:
+            # Query the end_point by the token.
             response = requests.get(
                 f'https://api.chatie.io/v0/hosties/{self.options.token}'
             )
@@ -860,13 +876,17 @@ class HostiePuppet(Puppet):
             data = response.json()
             if 'ip' not in data or data['ip'] == '0.0.0.0':
                 raise Exception("can't find hostie server address")
-            if 'port' in data:
-                port = data['port']
+            if 'port' not in data:
+                raise Exception("can't find hostie server port")
             log.debug('get puppet ip address : <%s>', data)
-            self.options.end_point = data['ip']
-        log.info('init puppet hostie')
+            self.options.end_point = '{ip}:{port}'.format(**data)
 
-        self.channel = Channel(host=self.options.end_point, port=port)
+        if not re.match(r'^(?:(?!-)[\d\w-]{1,63}(?<!-)\.)+(?!-)[\d\w]{1,63}(?<!-):\d{2,5}$',
+                        self.options.end_point):
+            raise Exception('Malformed endpoint format, should be {hostname}:{port}')
+
+        host, port = self.options.end_point.split(':')
+        self.channel = Channel(host=host, port=port)
         self.puppet_stub = PuppetStub(self.channel)
 
     async def start(self) -> None:
@@ -897,7 +917,7 @@ class HostiePuppet(Puppet):
         log.info('stop()')
         self._event_stream.remove_all_listeners()
         await self.puppet_stub.stop()
-        await self.channel.close()
+        self.channel.close()
 
         self.puppet_stub = None
         self.channel = None
@@ -921,11 +941,14 @@ class HostiePuppet(Puppet):
             self._event_stream.emit('logout', payload)
             self.login_user_id = None
 
-    async def login(self):
+    async def login(self, user_id: str):
         """
         login the account
         :return:
         """
+        self.login_user_id = user_id
+        payload = EventLoginPayload(contact_id=user_id)
+        self._event_stream.emit('login', payload)
 
     async def ding(self, data: Optional[str] = ''):
         """
