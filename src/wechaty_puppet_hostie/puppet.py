@@ -23,6 +23,7 @@ from __future__ import annotations
 import json
 import re
 from typing import Optional, List
+from dataclasses import asdict
 import requests
 
 from chatie_grpc.wechaty import (  # type: ignore
@@ -373,7 +374,7 @@ class HostiePuppet(Puppet):
         response = await self.puppet_stub.message_send_mini_program(
             conversation_id=conversation_id,
             # TODO -> check mini_program key
-            mini_program=mini_program.thumb_url
+            mini_program=json.dumps(asdict(mini_program))
         )
         return response.id
 
@@ -482,9 +483,16 @@ class HostiePuppet(Puppet):
         :return:
         """
         # TODO -> need to MiniProgram
-        # response = await self.puppet_stub.message_mini_program(id=message_id)
-        # return MiniProgramPayload(response.mini_program)
-        return MiniProgramPayload()
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
+
+        response = await self.puppet_stub.message_mini_program(id=message_id)
+        response_dict = json.loads(response.mini_program)
+        try:
+            mini_program = MiniProgramPayload(**response_dict)
+        except Exception:
+            raise ValueError(f'can"t init mini-program payload {response_dict}')
+        return mini_program
 
     async def contact_alias(self, contact_id: str, alias: Optional[str] = None
                             ) -> str:
