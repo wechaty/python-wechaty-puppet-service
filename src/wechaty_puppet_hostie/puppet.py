@@ -23,6 +23,7 @@ from __future__ import annotations
 import json
 import re
 from typing import Optional, List
+from dataclasses import asdict
 import requests
 
 from chatie_grpc.wechaty import (  # type: ignore
@@ -369,7 +370,7 @@ class HostiePuppet(Puppet):
         response = await self.puppet_stub.message_send_mini_program(
             conversation_id=conversation_id,
             # TODO -> check mini_program key
-            mini_program=mini_program.thumb_url
+            mini_program=json.dumps(asdict(mini_program))
         )
         return response.id
 
@@ -408,9 +409,24 @@ class HostiePuppet(Puppet):
         :param message_id:
         :return:
         """
-        # TODO -> we should get the type of the message, and forward the message
-        # to different conversation_id
-        # await self.puppet_stub.message_send_mini_program()
+        payload = await self.message_payload(message_id=message_id)
+        if payload.type == MessageType.MESSAGE_TYPE_TEXT:
+            if not payload.text:
+                raise Exception('no text')
+            await self.message_send_text(conversation_id=to_id, message=payload.text)
+        elif payload.type == MessageType.MESSAGE_TYPE_URL:
+            url_payload = await self.message_url(message_id=message_id)
+            await self.message_send_url(conversation_id=to_id, url=url_payload.url)
+        elif payload.type == MessageType.MESSAGE_TYPE_MINI_PROGRAM:
+            mini_program = await self.message_mini_program(message_id=message_id)
+            await self.message_send_mini_program(conversation_id=to_id, mini_program=mini_program)
+        # TODO
+        # elif payload.type == MessageType.MESSAGE_TYPE_EMOTICON:
+        # elif payload.type == MessageType.MESSAGE_TYPE_AUDIO:
+        # elif payload.type == MessageType.ChatHistory:
+        else:
+            file_box = await self.message_file(message_id=message_id)
+            await self.message_send_file(conversation_id=to_id, file=file_box)
 
     async def message_file(self, message_id: str) -> FileBox:
         """
@@ -453,9 +469,16 @@ class HostiePuppet(Puppet):
         :return:
         """
         # TODO -> need to MiniProgram
-        # response = await self.puppet_stub.message_mini_program(id=message_id)
-        # return MiniProgramPayload(response.mini_program)
-        return MiniProgramPayload()
+        if self.puppet_stub is None:
+            raise Exception('puppet_stub should not be none')
+
+        response = await self.puppet_stub.message_mini_program(id=message_id)
+        response_dict = json.loads(response.mini_program)
+        try:
+            mini_program = MiniProgramPayload(**response_dict)
+        except Exception:
+            raise ValueError(f'can"t init mini-program payload {response_dict}')
+        return mini_program
 
     async def contact_alias(self, contact_id: str, alias: Optional[str] = None
                             ) -> str:
