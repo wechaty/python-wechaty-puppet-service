@@ -236,8 +236,6 @@ class HostiePuppet(Puppet):
         get contact list
         :return:
         """
-        if self.puppet_stub is None:
-            raise WechatyPuppetError('puppet_stub should not be none')
         response = await self.puppet_stub.contact_list()
         if response is None:
             # TODO -> need to refactor the raised error
@@ -818,7 +816,7 @@ class HostiePuppet(Puppet):
 
             if 'ip' not in data or data['ip'] == '0.0.0.0':
                 raise WechatyPuppetGrpcError(
-                    'Your hostie token has no endpoint available, is your token correct?'
+                    'Your hostie token has no available endpoint, is your token correct?'
                 )
             if 'port' not in data:
                 raise WechatyPuppetGrpcError("can't find hostie server port")
