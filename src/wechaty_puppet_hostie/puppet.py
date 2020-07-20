@@ -67,7 +67,7 @@ from wechaty_puppet import (  # type: ignore
     get_logger
 )
 
-from wechaty_puppet.exceptions import (
+from wechaty_puppet.exceptions import (  # type: ignore
     WechatyPuppetConfigurationError,
     WechatyPuppetError,
     WechatyPuppetGrpcError,
