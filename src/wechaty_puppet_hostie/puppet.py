@@ -405,7 +405,7 @@ class HostiePuppet(Puppet):
         # elif payload.type == MessageType.MESSAGE_TYPE_EMOTICON:
         elif payload.type == MessageType.MESSAGE_TYPE_AUDIO:
             # TODO
-            raise WechatyPuppetGrpcError('Can not support audio message forward')
+            raise WechatyPuppetOperationError('Can not support audio message forward')
         # elif payload.type == MessageType.ChatHistory:
         elif payload.type == MessageType.MESSAGE_TYPE_IMAGE:
             file_box = await self.message_image(message_id=message_id, image_type=3)
@@ -429,7 +429,7 @@ class HostiePuppet(Puppet):
             name=json_response['name']
         )
         return file_box
-    
+
     async def message_image(self, message_id: str, image_type: ImageType = 3
                             ) -> FileBox:
         """
@@ -447,7 +447,7 @@ class HostiePuppet(Puppet):
             name=json_response['name'] + '.png'
         )
         return file_box
-    
+
     async def message_contact(self, message_id: str) -> str:
         """
         extract
