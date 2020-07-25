@@ -212,7 +212,6 @@ class HostiePuppet(Puppet):
             name=json_response['name'] + '.png'
         )
         return file_box
-        return FileBox.from_json(obj=json_response)
 
     def on(self, event_name: str, caller):
         """
