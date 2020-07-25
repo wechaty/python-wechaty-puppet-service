@@ -195,24 +195,6 @@ class HostiePuppet(Puppet):
             raise WechatyPuppetGrpcError('can"t get room_list response')
         return response.ids
 
-    async def message_image(self, message_id: str, image_type: ImageType = 3
-                            ) -> FileBox:
-        """
-        get message image data
-        :param message_id:
-        :param image_type:
-        :return:
-        """
-        response = await self.puppet_stub.message_image(id=message_id, type=image_type)
-        json_response = json.loads(response.filebox)
-        if 'base64' not in json_response:
-            raise WechatyPuppetGrpcError('image response data structure is not correct')
-        file_box = FileBox.from_base64(
-            json_response['base64'],
-            name=json_response['name'] + '.png'
-        )
-        return file_box
-
     def on(self, event_name: str, caller):
         """
         listen event from the wechaty
@@ -426,7 +408,7 @@ class HostiePuppet(Puppet):
             raise WechatyPuppetGrpcError('Can not support audio message forward')
         # elif payload.type == MessageType.ChatHistory:
         elif payload.type == MessageType.MESSAGE_TYPE_IMAGE:
-            file_box = await self.message_image(message_id=message_id)
+            file_box = await self.message_image(message_id=message_id, image_type=3)
             await self.message_send_file(conversation_id=to_id, file=file_box)
         else:
             file_box = await self.message_file(message_id=message_id)
@@ -447,7 +429,25 @@ class HostiePuppet(Puppet):
             name=json_response['name']
         )
         return file_box
-
+    
+    async def message_image(self, message_id: str, image_type: ImageType = 3
+                            ) -> FileBox:
+        """
+        get message image data
+        :param message_id:
+        :param image_type:
+        :return:
+        """
+        response = await self.puppet_stub.message_image(id=message_id, type=image_type)
+        json_response = json.loads(response.filebox)
+        if 'base64' not in json_response:
+            raise WechatyPuppetGrpcError('image response data structure is not correct')
+        file_box = FileBox.from_base64(
+            json_response['base64'],
+            name=json_response['name'] + '.png'
+        )
+        return file_box
+    
     async def message_contact(self, message_id: str) -> str:
         """
         extract
