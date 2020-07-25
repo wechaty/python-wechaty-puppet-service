@@ -195,7 +195,7 @@ class HostiePuppet(Puppet):
             raise WechatyPuppetGrpcError('can"t get room_list response')
         return response.ids
 
-    async def message_image(self, message_id: str, image_type: ImageType
+    async def message_image(self, message_id: str, image_type: ImageType = 3
                             ) -> FileBox:
         """
         get message image data
@@ -203,14 +203,15 @@ class HostiePuppet(Puppet):
         :param image_type:
         :return:
         """
-        response = await self.puppet_stub.message_image(
-            id=message_id,
-            type=image_type)
-        if response is None:
-            # TODO -> need to refactor the raised error
-            raise WechatyPuppetGrpcError('response is invalid')
+        response = await self.puppet_stub.message_image(id=message_id, type=image_type)
         json_response = json.loads(response.filebox)
-        return FileBox.from_json(obj=json_response)
+        if 'base64' not in json_response:
+            raise WechatyPuppetGrpcError('image response data structure is not correct')
+        file_box = FileBox.from_base64(
+            json_response['base64'],
+            name=json_response['name'] + '.png'
+        )
+        return file_box
 
     def on(self, event_name: str, caller):
         """
@@ -444,23 +445,6 @@ class HostiePuppet(Puppet):
         file_box = FileBox.from_base64(
             json_response['base64'],
             name=json_response['name']
-        )
-        return file_box
-
-    async def message_image(self, message_id: str, type: ImageType = 3) -> FileBox:
-        '''
-        extract image from message
-        :param message_id:
-        :param type:
-        :return:
-        '''
-        response = await self.puppet_stub.message_image(id=message_id, type=type)
-        json_response = json.loads(response.filebox)
-        if 'base64' not in json_response:
-            raise WechatyPuppetGrpcError('image response data structure is not correct')
-        file_box = FileBox.from_base64(
-            json_response['base64'],
-            name=json_response['name'] + '.png'
         )
         return file_box
 
