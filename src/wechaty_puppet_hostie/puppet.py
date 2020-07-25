@@ -429,7 +429,6 @@ class HostiePuppet(Puppet):
             name=json_response['name']
         )
         return file_box
-
     async def message_image(self, message_id: str, image_type: ImageType = 3
                             ) -> FileBox:
         """
@@ -447,7 +446,6 @@ class HostiePuppet(Puppet):
             name=json_response['name'] + '.png'
         )
         return file_box
-
     async def message_contact(self, message_id: str) -> str:
         """
         extract
