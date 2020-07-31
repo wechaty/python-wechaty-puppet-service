@@ -458,7 +458,7 @@ class HostiePuppet(Puppet):
         DOMTree = xml.dom.minidom.parseString(message)
         collection = DOMTree.documentElement
         file_box = FileBox.from_url(
-           url=collection.getElementsByTagName('emoji')[0].getAttribute('cdnurl'),
+            url=collection.getElementsByTagName('emoji')[0].getAttribute('cdnurl'),
             name=collection.getElementsByTagName('emoji')[0].getAttribute('md5') + '.gif'
         )
         return file_box
