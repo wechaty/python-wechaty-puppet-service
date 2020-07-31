@@ -24,7 +24,7 @@ import json
 import re
 from typing import Optional, List
 from dataclasses import asdict
-import xml
+import xml.dom.minidom
 import requests
 
 from chatie_grpc.wechaty import (  # type: ignore
