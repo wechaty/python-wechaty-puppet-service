@@ -419,8 +419,9 @@ class HostiePuppet(Puppet):
         elif payload.type == MessageType.MESSAGE_TYPE_MINI_PROGRAM:
             mini_program = await self.message_mini_program(message_id=message_id)
             await self.message_send_mini_program(conversation_id=to_id, mini_program=mini_program)
-        # TODO
-        # elif payload.type == MessageType.MESSAGE_TYPE_EMOTICON:
+        elif payload.type == MessageType.MESSAGE_TYPE_EMOTICON:
+            file_box = await self.message_emoticon(message=payload.text)
+            await self.message_send_file(conversation_id=to_id, file=file_box)
         elif payload.type == MessageType.MESSAGE_TYPE_AUDIO:
             raise WechatyPuppetOperationError('Can not support audio message forward')
         # elif payload.type == MessageType.ChatHistory:
@@ -444,6 +445,21 @@ class HostiePuppet(Puppet):
         file_box = FileBox.from_base64(
             json_response['base64'],
             name=json_response['name']
+        )
+        return file_box
+
+    async def message_emoticon(self, message: str) -> FileBox:
+        """
+        emoticon from message
+        :param message:
+        :return:
+        """
+        import xml.dom.minidom
+        DOMTree = xml.dom.minidom.parseString(message)
+        collection = DOMTree.documentElement
+        file_box = FileBox.from_url(
+           url=collection.getElementsByTagName('emoji')[0].getAttribute('cdnurl'),
+            name=collection.getElementsByTagName('emoji')[0].getAttribute('md5') + '.gif'
         )
         return file_box
 
