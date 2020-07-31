@@ -209,7 +209,7 @@ class HostiePuppet(Puppet):
             raise WechatyPuppetGrpcError('image response data structure is not correct')
         file_box = FileBox.from_base64(
             json_response['base64'],
-            name=json_response['name'] + '.png'
+            name=json_response['name']
         )
         return file_box
 
