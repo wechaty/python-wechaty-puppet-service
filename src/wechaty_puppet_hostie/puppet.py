@@ -25,6 +25,7 @@ import re
 from typing import Optional, List
 from dataclasses import asdict
 import requests
+import xml
 
 from chatie_grpc.wechaty import (  # type: ignore
     PuppetStub,
@@ -454,7 +455,6 @@ class HostiePuppet(Puppet):
         :param message:
         :return:
         """
-        import xml.dom.minidom
         DOMTree = xml.dom.minidom.parseString(message)
         collection = DOMTree.documentElement
         file_box = FileBox.from_url(
