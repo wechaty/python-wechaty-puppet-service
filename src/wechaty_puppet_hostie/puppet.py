@@ -24,8 +24,8 @@ import json
 import re
 from typing import Optional, List
 from dataclasses import asdict
-import requests
 import xml
+import requests
 
 from chatie_grpc.wechaty import (  # type: ignore
     PuppetStub,
