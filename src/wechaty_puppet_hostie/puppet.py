@@ -24,6 +24,7 @@ import json
 import re
 from typing import Optional, List
 from dataclasses import asdict
+import xml.dom.minidom
 import requests
 
 from chatie_grpc.wechaty import (  # type: ignore
@@ -195,7 +196,7 @@ class HostiePuppet(Puppet):
             raise WechatyPuppetGrpcError('can"t get room_list response')
         return response.ids
 
-    async def message_image(self, message_id: str, image_type: ImageType
+    async def message_image(self, message_id: str, image_type: ImageType = 3
                             ) -> FileBox:
         """
         get message image data
@@ -203,14 +204,15 @@ class HostiePuppet(Puppet):
         :param image_type:
         :return:
         """
-        response = await self.puppet_stub.message_image(
-            id=message_id,
-            type=image_type)
-        if response is None:
-            # TODO -> need to refactor the raised error
-            raise WechatyPuppetGrpcError('response is invalid')
+        response = await self.puppet_stub.message_image(id=message_id, type=image_type)
         json_response = json.loads(response.filebox)
-        return FileBox.from_json(obj=json_response)
+        if 'base64' not in json_response:
+            raise WechatyPuppetGrpcError('image response data structure is not correct')
+        file_box = FileBox.from_base64(
+            json_response['base64'],
+            name=json_response['name']
+        )
+        return file_box
 
     def on(self, event_name: str, caller):
         """
@@ -418,10 +420,15 @@ class HostiePuppet(Puppet):
         elif payload.type == MessageType.MESSAGE_TYPE_MINI_PROGRAM:
             mini_program = await self.message_mini_program(message_id=message_id)
             await self.message_send_mini_program(conversation_id=to_id, mini_program=mini_program)
-        # TODO
-        # elif payload.type == MessageType.MESSAGE_TYPE_EMOTICON:
-        # elif payload.type == MessageType.MESSAGE_TYPE_AUDIO:
+        elif payload.type == MessageType.MESSAGE_TYPE_EMOTICON:
+            file_box = await self.message_emoticon(message=payload.text)
+            await self.message_send_file(conversation_id=to_id, file=file_box)
+        elif payload.type == MessageType.MESSAGE_TYPE_AUDIO:
+            raise WechatyPuppetOperationError('Can not support audio message forward')
         # elif payload.type == MessageType.ChatHistory:
+        elif payload.type == MessageType.MESSAGE_TYPE_IMAGE:
+            file_box = await self.message_image(message_id=message_id, image_type=3)
+            await self.message_send_file(conversation_id=to_id, file=file_box)
         else:
             file_box = await self.message_file(message_id=message_id)
             await self.message_send_file(conversation_id=to_id, file=file_box)
@@ -439,6 +446,20 @@ class HostiePuppet(Puppet):
         file_box = FileBox.from_base64(
             json_response['base64'],
             name=json_response['name']
+        )
+        return file_box
+
+    async def message_emoticon(self, message: str) -> FileBox:
+        """
+        emoticon from message
+        :param message:
+        :return:
+        """
+        DOMTree = xml.dom.minidom.parseString(message)
+        collection = DOMTree.documentElement
+        file_box = FileBox.from_url(
+            url=collection.getElementsByTagName('emoji')[0].getAttribute('cdnurl'),
+            name=collection.getElementsByTagName('emoji')[0].getAttribute('md5') + '.gif'
         )
         return file_box
 
