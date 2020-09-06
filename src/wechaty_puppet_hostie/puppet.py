@@ -1002,7 +1002,7 @@ class HostiePuppet(Puppet):
                     payload = EventRoomLeavePayload(
                         removed_ids=payload_data.get('removeeIdList', []),
                         remover_id=payload_data.get('removerId'),
-                        room_id=payload_data.get('removerId'),
+                        room_id=payload_data.get('roomId'),
                         time_stamp=payload_data.get('timestamp')
                     )
                     self._event_stream.emit('room-leave', payload)
