@@ -495,8 +495,8 @@ class HostiePuppet(Puppet):
         response_dict = json.loads(response.mini_program)
         try:
             mini_program = MiniProgramPayload(**response_dict)
-        except Exception:
-            raise WechatyPuppetPayloadError(f'can"t init mini-program payload {response_dict}')
+        except Exception as e:
+            raise WechatyPuppetPayloadError(f'can"t init mini-program payload {response_dict}') from e
         return mini_program
 
     async def contact_alias(self, contact_id: str, alias: Optional[str] = None
