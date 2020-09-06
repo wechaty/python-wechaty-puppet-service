@@ -159,7 +159,7 @@ class HostiePuppet(Puppet):
     """
 
     def __init__(self, options: PuppetOptions, name: str = 'hostie_puppet'):
-        super(HostiePuppet, self).__init__(options, name)
+        super().__init__(options, name)
 
         if options.token is None:
             if WECHATY_PUPPET_HOSTIE_TOKEN is None:
@@ -496,7 +496,7 @@ class HostiePuppet(Puppet):
         try:
             mini_program = MiniProgramPayload(**response_dict)
         except Exception:
-            raise ValueError(f'can"t init mini-program payload {response_dict}')
+            raise WechatyPuppetPayloadError(f'can"t init mini-program payload {response_dict}')
         return mini_program
 
     async def contact_alias(self, contact_id: str, alias: Optional[str] = None
