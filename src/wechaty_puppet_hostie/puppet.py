@@ -495,7 +495,7 @@ class HostiePuppet(Puppet):
         response_dict = json.loads(response.mini_program)
         try:
             mini_program = MiniProgramPayload(**response_dict)
-        except Exception as :
+        except Exception as e:
             raise WechatyPuppetPayloadError(f'can"t init mini-program payload {response_dict}')\
                 from e
         return mini_program
