@@ -76,7 +76,7 @@ from wechaty_puppet.exceptions import (  # type: ignore
     WechatyPuppetPayloadError
 )
 
-from wechaty_puppet.file_box.type import FileBoxType
+from wechaty_puppet.file_box import FileBoxType
 
 from .config import (
     WECHATY_PUPPET_HOSTIE_TOKEN,
