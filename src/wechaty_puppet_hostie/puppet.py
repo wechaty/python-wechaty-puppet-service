@@ -443,7 +443,7 @@ class HostiePuppet(Puppet):
         """
         response = await self.puppet_stub.message_file(id=message_id)
         json_response = json.loads(response.filebox)
-        box_type = json_response.get("boxType")
+        box_type = json_response.get('boxType')
         if box_type == FileBoxType.Url.value:
             file_box = FileBox.from_url(json_response['remoteUrl'], name=json_response['name'])
         else:
