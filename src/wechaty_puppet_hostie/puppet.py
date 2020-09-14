@@ -76,8 +76,6 @@ from wechaty_puppet.exceptions import (  # type: ignore
     WechatyPuppetPayloadError
 )
 
-from wechaty_puppet.file_box import FileBoxType  # type: ignore
-
 from .config import (
     WECHATY_PUPPET_HOSTIE_TOKEN,
     WECHATY_PUPPET_HOSTIE_ENDPOINT
@@ -442,17 +440,7 @@ class HostiePuppet(Puppet):
         :return:
         """
         response = await self.puppet_stub.message_file(id=message_id)
-        json_response = json.loads(response.filebox)
-        box_type = json_response.get('boxType')
-        if box_type == FileBoxType.Url.value:
-            file_box = FileBox.from_url(json_response['remoteUrl'], name=json_response['name'])
-        else:
-            if 'base64' not in json_response:
-                raise WechatyPuppetGrpcError('file response data structure is not correct')
-            file_box = FileBox.from_base64(
-                json_response['base64'],
-                name=json_response['name']
-            )
+        file_box = FileBox.from_json(response.filebox)
         return file_box
 
     async def message_emoticon(self, message: str) -> FileBox:
