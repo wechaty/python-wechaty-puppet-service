@@ -440,13 +440,7 @@ class HostiePuppet(Puppet):
         :return:
         """
         response = await self.puppet_stub.message_file(id=message_id)
-        json_response = json.loads(response.filebox)
-        if 'base64' not in json_response:
-            raise WechatyPuppetGrpcError('file response data structure is not correct')
-        file_box = FileBox.from_base64(
-            json_response['base64'],
-            name=json_response['name']
-        )
+        file_box = FileBox.from_json(response.filebox)
         return file_box
 
     async def message_emoticon(self, message: str) -> FileBox:
