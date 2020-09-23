@@ -981,7 +981,7 @@ class HostiePuppet(Puppet):
                         invited_ids=payload_data.get('inviteeIdList', []),
                         inviter_id=payload_data.get('inviterId'),
                         room_id=payload_data.get('roomId'),
-                        time_stamp=payload_data.get('timestamp')
+                        timestamp=payload_data.get('timestamp')
                     )
                     self._event_stream.emit('room-join', payload)
 
@@ -999,7 +999,7 @@ class HostiePuppet(Puppet):
                         removed_ids=payload_data.get('removeeIdList', []),
                         remover_id=payload_data.get('removerId'),
                         room_id=payload_data.get('removerId'),
-                        time_stamp=payload_data.get('timestamp')
+                        timestamp=payload_data.get('timestamp')
                     )
                     self._event_stream.emit('room-leave', payload)
 
@@ -1010,7 +1010,7 @@ class HostiePuppet(Puppet):
                         new_topic=payload_data.get('newTopic'),
                         old_topic=payload_data.get('oldTopic'),
                         room_id=payload_data.get('roomId'),
-                        time_stamp=payload_data.get('timestamp')
+                        timestamp=payload_data.get('timestamp')
                     )
                     self._event_stream.emit('room-topic', payload)
 
