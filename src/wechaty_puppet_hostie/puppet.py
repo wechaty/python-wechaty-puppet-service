@@ -159,7 +159,7 @@ class HostiePuppet(Puppet):
     """
 
     def __init__(self, options: PuppetOptions, name: str = 'hostie_puppet'):
-        super(HostiePuppet, self).__init__(options, name)
+        super().__init__(options, name)
 
         if options.token is None:
             if WECHATY_PUPPET_HOSTIE_TOKEN is None:
@@ -440,9 +440,7 @@ class HostiePuppet(Puppet):
         :return:
         """
         response = await self.puppet_stub.message_file(id=message_id)
-        json_response = json.loads(response.filebox)
-
-        file_box = FileBox.from_json(json_response)
+        file_box = FileBox.from_json(response.filebox)
         return file_box
 
     async def message_emoticon(self, message: str) -> FileBox:
@@ -491,8 +489,9 @@ class HostiePuppet(Puppet):
         response_dict = json.loads(response.mini_program)
         try:
             mini_program = MiniProgramPayload(**response_dict)
-        except Exception:
-            raise ValueError(f'can"t init mini-program payload {response_dict}')
+        except Exception as e:
+            raise WechatyPuppetPayloadError(f'can"t init mini-program payload {response_dict}')\
+                from e
         return mini_program
 
     async def contact_alias(self, contact_id: str, alias: Optional[str] = None
@@ -998,7 +997,7 @@ class HostiePuppet(Puppet):
                     payload = EventRoomLeavePayload(
                         removed_ids=payload_data.get('removeeIdList', []),
                         remover_id=payload_data.get('removerId'),
-                        room_id=payload_data.get('removerId'),
+                        room_id=payload_data.get('roomId'),
                         timestamp=payload_data.get('timestamp')
                     )
                     self._event_stream.emit('room-leave', payload)
