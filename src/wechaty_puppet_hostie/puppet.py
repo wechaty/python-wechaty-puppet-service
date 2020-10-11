@@ -35,6 +35,8 @@ from grpclib.client import Channel
 # pylint: disable=E0401
 from pyee import AsyncIOEventEmitter  # type: ignore
 
+from wechaty_puppet.schemas.types import PayloadType
+
 from wechaty_puppet import (  # type: ignore
     EventScanPayload,
     ScanStatus,
@@ -510,10 +512,9 @@ class HostiePuppet(Puppet):
 
     async def contact_payload_dirty(self, contact_id: str):
         """
-        # TODO this function has not been implement in chatie_grpc
-        :param contact_id:
-        :return:
+        mark the contact payload dirty status, and remove it from the cache
         """
+        await self.dirty_payload(PayloadType.PAYLOAD_TYPE_CONTACT, contact_id)
 
     async def contact_payload(self, contact_id: str) -> ContactPayload:
         """
@@ -662,7 +663,7 @@ class HostiePuppet(Puppet):
         :return:
         """
 
-        response = await self.puppet_stub.contact_self_q_r_code()
+        response = await self.puppet_stub.contact_self_qr_code()
         return response.qrcode
 
     async def contact_self_name(self, name: str):
@@ -689,17 +690,25 @@ class HostiePuppet(Puppet):
 
     async def room_payload_dirty(self, room_id: str):
         """
-
+        mark the room payload dirty status, and remove it from the cache
         :param room_id:
         :return:
         """
+        await self.dirty_payload(
+            PayloadType.PAYLOAD_TYPE_ROOM,
+            room_id
+        )
 
     async def room_member_payload_dirty(self, room_id: str):
         """
-
+        mark the room-member payload dirty status, and remove it from the cache
         :param room_id:
         :return:
         """
+        await self.dirty_payload(
+            PayloadType.PAYLOAD_TYPE_ROOM_MEMBER,
+            room_id
+        )
 
     async def room_payload(self, room_id: str) -> RoomPayload:
         """
@@ -777,8 +786,10 @@ class HostiePuppet(Puppet):
         :param room_id:
         :return:
         """
+        # TODO -> chatie-grpc packages has leave out id params
+        log.warning('room_qr_code() <room_id: %s> param is missing', room_id)
         room_qr_code_response = await \
-            self.puppet_stub.room_q_r_code(id=room_id)
+            self.puppet_stub.room_qr_code()
         return room_qr_code_response.qrcode
 
     async def room_member_payload(self, room_id: str,
@@ -811,6 +822,15 @@ class HostiePuppet(Puppet):
             name=f'avatar-{room_id}.jpeg'
         )
         return file_box
+
+    async def dirty_payload(self, payload_type: PayloadType, payload_id: str):
+        """
+        mark the payload dirty status, and remove it from the cache
+        """
+        await self.puppet_stub.dirty_payload(
+            type=payload_type.value,
+            id=payload_id
+        )
 
     def _init_puppet(self):
         """
