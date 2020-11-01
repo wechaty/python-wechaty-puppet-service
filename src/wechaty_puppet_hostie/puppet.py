@@ -867,6 +867,9 @@ class HostiePuppet(Puppet):
 
         host, port = self.options.end_point.split(':')
         self.channel = Channel(host=host, port=port)
+
+        self.channel._authority = self.options.token
+
         self._puppet_stub = PuppetStub(self.channel)
 
     async def start(self) -> None:
