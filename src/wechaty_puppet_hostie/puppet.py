@@ -24,7 +24,7 @@ import json
 import re
 from typing import Optional, List
 from dataclasses import asdict
-import xml.dom.minidom
+import xml.dom.minidom  # type: ignore
 import requests
 
 from chatie_grpc.wechaty import (  # type: ignore
@@ -867,6 +867,10 @@ class HostiePuppet(Puppet):
 
         host, port = self.options.end_point.split(':')
         self.channel = Channel(host=host, port=port)
+
+        # pylint: disable=W0212
+        self.channel._authority = self.options.token
+
         self._puppet_stub = PuppetStub(self.channel)
 
     async def start(self) -> None:
