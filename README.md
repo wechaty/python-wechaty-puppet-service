@@ -18,12 +18,12 @@ Python Service Puppet for Wechaty
 ```python
 import asyncio
 from wechaty import Wechaty
-from wechaty_puppet_service import ServicePuppet
+from wechaty_puppet_service import PuppetService
 
-bot = Wechaty(ServicePuppet("your-token-here"))
+bot = Wechaty(PuppetService("your-token-here"))
 bot.on('message', lambda x: print(x))
 
-asyncio.run(wechaty.start())
+asyncio.run(bot.start())
 ```
 
 ## Environment Variables
