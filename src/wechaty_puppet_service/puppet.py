@@ -22,6 +22,8 @@ from __future__ import annotations
 
 import json
 import re
+import os
+from functools import reduce
 from typing import Optional, List
 from dataclasses import asdict
 import xml.dom.minidom  # type: ignore
@@ -79,8 +81,8 @@ from wechaty_puppet.exceptions import (  # type: ignore
 )
 
 from .config import (
-    WECHATY_PUPPET_HOSTIE_TOKEN,
-    WECHATY_PUPPET_HOSTIE_ENDPOINT
+    WECHATY_PUPPET_SERVICE_ENDPOINT,
+    WECHATY_PUPPET_SERVICE_TOKEN,
 )
 
 log = get_logger('HostiePuppet')
@@ -88,7 +90,7 @@ log = get_logger('HostiePuppet')
 
 def _map_message_type(message_payload: MessagePayload) -> MessagePayload:
     """
-    get messageType value which is ts-wechaty-puppet type from hostie server,
+    get messageType value which is ts-wechaty-puppet type from service server,
         but is MessageType. so we should map it to MessageType from chatie-grpc
     target MessageType Enum:
         MESSAGE_TYPE_UNSPECIFIED  = 0;
@@ -155,7 +157,7 @@ def _map_message_type(message_payload: MessagePayload) -> MessagePayload:
 
 
 # pylint: disable=R0904
-class HostiePuppet(Puppet):
+class PuppetService(Puppet):
     """
     grpc wechaty puppet implementation
     """
@@ -164,12 +166,24 @@ class HostiePuppet(Puppet):
         super().__init__(options, name)
 
         if options.token is None:
-            if WECHATY_PUPPET_HOSTIE_TOKEN is None:
-                raise WechatyPuppetConfigurationError('wechaty-puppet-hostie: token not found.')
-            options.token = WECHATY_PUPPET_HOSTIE_TOKEN
+            if WECHATY_PUPPET_SERVICE_TOKEN is None:
+                # TODO: this checking should be removed after 0.6.10 version
+                if 'WECHATY_PUPPET_HOSTIE_TOKEN' in os.environ:
+                    log.warning('WECHATY_PUPPET_HOSTIE_TOKEN environment '
+                                'will be deprecated after 0.6.10 version, so '
+                                'please use new environment '
+                                'name<WECHATY_PUPPET_SERVICE_TOKEN> to avoid '
+                                'unnecessary bugs')
+                    options.token = os.environ['WECHATY_PUPPET_HOSTIE_TOKEN']
+                else:
+                    raise WechatyPuppetConfigurationError(
+                        'wechaty-puppet-service: token not found. please set '
+                        'environment<WECHATY_PUPPET_SERVICE_TOKEN> as token'
+                    )
+            options.token = WECHATY_PUPPET_SERVICE_TOKEN
 
-        if options.end_point is None and WECHATY_PUPPET_HOSTIE_ENDPOINT is not None:
-            options.end_point = WECHATY_PUPPET_HOSTIE_ENDPOINT
+        if options.end_point is None and WECHATY_PUPPET_SERVICE_ENDPOINT is not None:
+            options.end_point = WECHATY_PUPPET_SERVICE_ENDPOINT
 
         self.channel: Optional[Channel] = None
         self._puppet_stub: Optional[PuppetStub] = None
@@ -441,8 +455,17 @@ class HostiePuppet(Puppet):
         :param message_id:
         :return:
         """
-        response = await self.puppet_stub.message_file(id=message_id)
-        file_box = FileBox.from_json(response.filebox)
+        file_chunk_data: List[bytes] = []
+        name: str = ''
+
+        async for stream in self.puppet_stub.message_file_stream(id=message_id):
+            file_chunk_data.append(stream.file_box_chunk.data)
+            if not name and stream.file_box_chunk.name:
+                name = stream.file_box_chunk.name
+
+        file_stream = reduce(lambda pre, cu: pre + cu, file_chunk_data)
+        file_box = FileBox.from_stream(file_stream, name=name)
+
         return file_box
 
     async def message_emoticon(self, message: str) -> FileBox:
@@ -841,21 +864,22 @@ class HostiePuppet(Puppet):
         if not self.options.end_point:
             # Query the end_point by the token.
             log.info('There is no endpoint in cache, trying to fetch endpoint with token.')
+            # TODO: the endpoint should be
             response = requests.get(
                 f'https://api.chatie.io/v0/hosties/{self.options.token}'
             )
 
             if response.status_code != 200:
-                raise WechatyPuppetGrpcError('hostie server is invalid ... ')
+                raise WechatyPuppetGrpcError('service server is invalid ... ')
 
             data = response.json()
 
             if 'ip' not in data or data['ip'] == '0.0.0.0':
                 raise WechatyPuppetGrpcError(
-                    'Your hostie token has no available endpoint, is your token correct?'
+                    'Your service token has no available endpoint, is your token correct?'
                 )
             if 'port' not in data:
-                raise WechatyPuppetGrpcError("can't find hostie server port")
+                raise WechatyPuppetGrpcError("can't find service server port")
             log.debug('get puppet ip address : <%s>', data)
             self.options.end_point = '{ip}:{port}'.format(**data)
 
@@ -938,14 +962,14 @@ class HostiePuppet(Puppet):
         :param data:
         :return:
         """
-        log.debug('send ding info to hostie ...')
+        log.debug('send ding info to service server ...')
 
         await self.puppet_stub.ding(data=data)
 
     # pylint: disable=R0912,R0915
     async def _listen_for_event(self):
         """
-        listen event from hostie with heartbeat
+        listen event from service server with heartbeat
         """
         # listen event from grpclib
         log.info('listening the event from the puppet ...')
@@ -1060,3 +1084,14 @@ class HostiePuppet(Puppet):
 
                 elif response.type == int(EventType.EVENT_TYPE_UNSPECIFIED):
                     pass
+
+
+# TODO: this class should be removed after 0.6.10 version
+class HostiePuppet(PuppetService):
+    """Old HostiePuppet will be deprecated after 0.6.10 version"""
+    def __init__(self, options, name='puppet-hostie'):
+        super().__init__(options, name=name)
+
+        log.warning('HostiePuppet object will be deprecated after 0.6.10 '
+                    'version, please use PuppetService class as soon as '
+                    'possible to avoid unnecessary bugs')
