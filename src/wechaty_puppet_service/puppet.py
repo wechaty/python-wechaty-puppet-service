@@ -23,7 +23,6 @@ from __future__ import annotations
 import json
 import re
 import os
-from functools import reduce
 from typing import Optional, List
 from dataclasses import asdict
 import xml.dom.minidom  # type: ignore
@@ -455,17 +454,8 @@ class PuppetService(Puppet):
         :param message_id:
         :return:
         """
-        file_chunk_data: List[bytes] = []
-        name: str = ''
-
-        async for stream in self.puppet_stub.message_file_stream(id=message_id):
-            file_chunk_data.append(stream.file_box_chunk.data)
-            if not name and stream.file_box_chunk.name:
-                name = stream.file_box_chunk.name
-
-        file_stream = reduce(lambda pre, cu: pre + cu, file_chunk_data)
-        file_box = FileBox.from_stream(file_stream, name=name)
-
+        response = await self.puppet_stub.message_file(id=message_id)
+        file_box = FileBox.from_json(response.filebox)
         return file_box
 
     async def message_emoticon(self, message: str) -> FileBox:
