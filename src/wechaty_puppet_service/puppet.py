@@ -1074,14 +1074,3 @@ class PuppetService(Puppet):
 
                 elif response.type == int(EventType.EVENT_TYPE_UNSPECIFIED):
                     pass
-
-
-# TODO: this class should be removed after 0.6.10 version
-class HostiePuppet(PuppetService):
-    """Old HostiePuppet will be deprecated after 0.6.10 version"""
-    def __init__(self, options, name='puppet-hostie'):
-        super().__init__(options, name=name)
-
-        log.warning('HostiePuppet object will be deprecated after 0.6.10 '
-                    'version, please use PuppetService class as soon as '
-                    'possible to avoid unnecessary bugs')
