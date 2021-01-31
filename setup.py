@@ -36,19 +36,21 @@ def setup() -> None:
         version = versioning(fh.readline())
 
     setuptools.setup(
-        name='wechaty-puppet-hostie',
+        name='wechaty-puppet-service',
         version=version,
         author='Huan LI (李卓桓)',
         author_email='zixia@zixia.net',
-        description='Python Hostie Puppet for Wechaty',
+        description='Python Service Puppet for Wechaty',
         long_description=long_description,
         long_description_content_type='text/markdown',
         license='Apache-2.0',
-        url='https://github.com/wechaty/python-wechaty-puppet-hostie',
+        url='https://github.com/wechaty/python-wechaty-puppet-service',
         packages=setuptools.find_packages('src'),
         package_dir={'': 'src'},
-        install_requires = ['grpclib', 'pyee', 'requests',
-                            'chatie-grpc', 'wechaty-puppet'],
+        install_requires=[
+            'grpclib', 'pyee', 'requests',
+            'chatie-grpc', 'wechaty-puppet'
+        ],
         classifiers=[
             'Programming Language :: Python :: 3.7',
             'License :: OSI Approved :: Apache Software License',

@@ -1,39 +1,39 @@
-# wechaty-puppet-hostie [![Python 3.7](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/release/python-370/) [![PyPI GitHub Actions](https://github.com/wechaty/python-wechaty-puppet-hostie/workflows/PyPI/badge.svg)](https://github.com/wechaty/python-wechaty-puppet/actions?query=workflow%3APyPI)
+# wechaty-puppet-service [![Python 3.7](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/release/python-370/) [![PyPI GitHub Actions](https://github.com/wechaty/python-wechaty-puppet-service/workflows/PyPI/badge.svg)](https://github.com/wechaty/python-wechaty-puppet/actions?query=workflow%3APyPI)
 
 [![Powered by Wechaty](https://img.shields.io/badge/Powered%20By-Wechaty-brightgreen.svg)](https://github.com/wechaty/wechaty)
 
-![Hostie](https://wechaty.github.io/wechaty-puppet-hostie/images/hostie.png)
+![Service](https://wechaty.github.io/wechaty-puppet-service/images/hostie.png)
 
-[![PyPI Version](https://img.shields.io/pypi/v/wechaty-puppet-hostie?color=blue)](https://pypi.org/project/wechaty-puppet-hostie)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/wechaty-puppet-hostie?color=blue)
+[![PyPI Version](https://img.shields.io/pypi/v/wechaty-puppet-service?color=blue)](https://pypi.org/project/wechaty-puppet-service)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/wechaty-puppet-service?color=blue)
 
-Python Hostie Puppet for Wechaty
+Python Service Puppet for Wechaty
 
 ## Features
 
-1. Consume hostie service
+1. Consume Service service
 
 ## Usage
 
 ```python
 import asyncio
 from wechaty import Wechaty
-from wechaty_puppet_hostie import HostiePuppet
+from wechaty_puppet_service import PuppetService
 
-bot = Wechaty(HostiePuppet("your-token-here"))
+bot = Wechaty(PuppetService("your-token-here"))
 bot.on('message', lambda x: print(x))
 
-asyncio.run(wechaty.start())
+asyncio.run(bot.start())
 ```
 
 ## Environment Variables
 
-### 1 `WECHATY_PUPPET_HOSTIE_TOKEN`
+### 1 `WECHATY_PUPPET_SERVICE_TOKEN`
 
 The token set to this environment variable will become the default value of `puppetOptions.token`
 
 ```sh
-WECHATY_PUPPET_HOSTIE_TOKEN=secret python bot.py
+WECHATY_PUPPET_SERVICE_TOKEN=secret python bot.py
 ```
 
 ## History
