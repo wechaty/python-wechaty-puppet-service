@@ -25,6 +25,12 @@ def versioning(version: str) -> str:
     return fin_ver
 
 
+def get_install_requires() -> str:
+    """get install_requires"""
+    with open('requirements.txt', 'r') as requirements_fh:
+        return requirements_fh.read().splitlines()
+
+
 def setup() -> None:
     """setup"""
 
@@ -47,10 +53,7 @@ def setup() -> None:
         url='https://github.com/wechaty/python-wechaty-puppet-service',
         packages=setuptools.find_packages('src'),
         package_dir={'': 'src'},
-        install_requires=[
-            'grpclib', 'pyee', 'requests',
-            'chatie-grpc', 'wechaty-puppet'
-        ],
+        install_requires=get_install_requires(),
         classifiers=[
             'Programming Language :: Python :: 3.7',
             'License :: OSI Approved :: Apache Software License',

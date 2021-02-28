@@ -1,5 +1,3 @@
-grpclib
 pyee
 requests
-chatie-grpc>=0.18.12
-wechaty-puppet>=0.2.1
+wechaty-grpc>=0.20

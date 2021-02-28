@@ -90,3 +90,16 @@ publish:
 .PHONY: demo
 demo:
 	python3 examples/demo.py
+
+.PHONY: version
+version:
+	@newVersion=$$(awk -F. '{print $$1"."$$2"."$$3+1}' < VERSION) \
+		&& echo $${newVersion} > VERSION \
+		&& git add VERSION \
+		&& git commit -m "🔥 update version to $${newVersion}" > /dev/null \
+		&& git tag "v$${newVersion}" \
+		&& echo "Bumped version to $${newVersion}"
+
+.PHONY: deploy-version
+deploy-version:
+	echo "VERSION = '$$(cat VERSION)'" > src/wechaty_puppet_service/version.py
