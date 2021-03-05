@@ -53,9 +53,12 @@ mypy:
 
 .PHONE: pytype
 pytype:
-	echo "skip pytype for not support Python 3.7 (yet, for temporary)"
-#	pytype src/ --disable=import-error,pyi-error
-#	pytype examples/ --disable=import-error
+	pytype -V 3.8 \
+		--disable=import-error,pyi-error \
+		src/
+	pytype -V 3.8 \
+		--disable=import-error \
+		examples/
 
 .PHONY: install
 install:
