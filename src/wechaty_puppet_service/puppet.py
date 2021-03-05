@@ -28,7 +28,7 @@ from dataclasses import asdict
 import xml.dom.minidom  # type: ignore
 import requests
 
-from chatie_grpc.wechaty import (  # type: ignore
+from wechaty_grpc.wechaty import (  # type: ignore
     PuppetStub,
 )
 # pylint: disable=E0401
@@ -90,7 +90,7 @@ log = get_logger('HostiePuppet')
 def _map_message_type(message_payload: MessagePayload) -> MessagePayload:
     """
     get messageType value which is ts-wechaty-puppet type from service server,
-        but is MessageType. so we should map it to MessageType from chatie-grpc
+        but is MessageType. so we should map it to MessageType from wechaty-grpc
     target MessageType Enum:
         MESSAGE_TYPE_UNSPECIFIED  = 0;
 
@@ -274,7 +274,7 @@ class PuppetService(Puppet):
         :param tag_id:
         :return:
         """
-        # chatie_grpc has not implement this function
+        # wechaty_grpc has not implement this function
         return None
 
     async def tag_contact_add(self, tag_id: str, contact_id: str):
@@ -294,7 +294,7 @@ class PuppetService(Puppet):
         :param contact_id:
         :return:
         """
-        # chatie_grpc has not implement this function
+        # wechaty_grpc has not implement this function
 
     async def tag_contact_remove(self, tag_id: str, contact_id: str):
         """
@@ -799,7 +799,7 @@ class PuppetService(Puppet):
         :param room_id:
         :return:
         """
-        # TODO -> chatie-grpc packages has leave out id params
+        # TODO -> wechaty-grpc packages has leave out id params
         log.warning('room_qr_code() <room_id: %s> param is missing', room_id)
         room_qr_code_response = await \
             self.puppet_stub.room_qr_code()
