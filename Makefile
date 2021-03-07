@@ -4,7 +4,7 @@
 # 	Author: Huan LI <zixia@zixia.net> git.io/zixia
 #
 
-SOURCE_GLOB=$(wildcard bin/*.py src/**/*.py tests/**/*.py examples/*.py)
+SOURCE_GLOB=$(wildcard bin/*.py src/**/*.py tests/**/*.py)
 
 #
 # Huan(202003)
@@ -56,9 +56,6 @@ pytype:
 	pytype -V 3.8 \
 		--disable=import-error,pyi-error \
 		src/
-	pytype -V 3.8 \
-		--disable=import-error \
-		examples/
 
 # re-install pre-commit tool: if there is already pre-commit package in virtual env, 
 # pip will not install pre-commit tool and related local git hooks scripts.
@@ -92,10 +89,6 @@ dist:
 .PHONY: publish
 publish:
 	PATH=~/.local/bin:${PATH} twine upload dist/*
-
-.PHONY: demo
-demo:
-	python3 examples/demo.py
 
 .PHONY: version
 version:
