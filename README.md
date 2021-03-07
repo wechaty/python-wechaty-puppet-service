@@ -40,6 +40,10 @@ WECHATY_PUPPET_SERVICE_TOKEN=secret python bot.py
 
 ### master
 
+### v0.7 (Mar, 2021)
+
+Rename from `wechaty-puppet-hostie` -> `wechaty-puppet-service`
+
 ### v0.0.1 (Mar 10, 2020)
 
 1. Init Python version
