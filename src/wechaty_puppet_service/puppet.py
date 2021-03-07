@@ -24,6 +24,7 @@ import json
 import re
 import os
 from typing import Optional, List
+from functools import reduce
 from dataclasses import asdict
 import xml.dom.minidom  # type: ignore
 import requests
@@ -79,7 +80,7 @@ from wechaty_puppet.exceptions import (  # type: ignore
     WechatyPuppetPayloadError
 )
 
-from .config import (
+from wechaty_puppet_service.config import (
     WECHATY_PUPPET_SERVICE_ENDPOINT,
     WECHATY_PUPPET_SERVICE_TOKEN,
 )
@@ -161,9 +162,16 @@ class PuppetService(Puppet):
     grpc wechaty puppet implementation
     """
 
-    def __init__(self, options: PuppetOptions, name: str = 'hostie_puppet'):
-        super().__init__(options, name)
+    def __init__(self, options: PuppetOptions, name: str = 'puppet_service'):
+        """init PuppetService from options or envrionment
 
+        Args:
+            options (PuppetOptions): the configuration of PuppetService
+            name (str, optional): [description]. Defaults to 'service_puppet'.
+
+        Raises:
+            WechatyPuppetConfigurationError: raise Error when configuraiton occur error
+        """
         if options.token is None:
             if WECHATY_PUPPET_SERVICE_TOKEN is None:
                 # TODO: this checking should be removed after 0.6.10 version
@@ -183,6 +191,8 @@ class PuppetService(Puppet):
 
         if options.end_point is None and WECHATY_PUPPET_SERVICE_ENDPOINT is not None:
             options.end_point = WECHATY_PUPPET_SERVICE_ENDPOINT
+
+        super().__init__(options, name)
 
         self.channel: Optional[Channel] = None
         self._puppet_stub: Optional[PuppetStub] = None
@@ -454,8 +464,16 @@ class PuppetService(Puppet):
         :param message_id:
         :return:
         """
-        response = await self.puppet_stub.message_file(id=message_id)
-        file_box = FileBox.from_json(response.filebox)
+        file_chunk_data: List[bytes] = []
+        name: str = ''
+
+        async for stream in self.puppet_stub.message_file_stream(id=message_id):
+            file_chunk_data.append(stream.file_box_chunk.data)
+            if not name and stream.file_box_chunk.name:
+                name = stream.file_box_chunk.name
+
+        file_stream = reduce(lambda pre, cu: pre + cu, file_chunk_data)
+        file_box = FileBox.from_stream(file_stream, name=name)
         return file_box
 
     async def message_emoticon(self, message: str) -> FileBox:
