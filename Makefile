@@ -73,7 +73,7 @@ install-git-hook:
 	# Ensures pre-commit hooks point to latest versions
 	pre-commit autoupdate
 	pre-commit install
-	pre-commit install --hook-type pre-push
+	pre-commit install --hook-type --overwrite pre-push
 
 .PHONY: install
 install:
