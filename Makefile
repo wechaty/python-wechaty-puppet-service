@@ -57,13 +57,12 @@ pytype:
 		--disable=import-error,pyi-error \
 		src/
 
-# re-install pre-commit tool: if there is already pre-commit package in virtual env, 
-# pip will not install pre-commit tool and related local git hooks scripts.
 .PHONY: install
 install:
 	pip3 install -r requirements.txt
-	pip3 uninstall -y pre-commit
 	pip3 install -r requirements-dev.txt
+	# install pre-commit related hook scripts
+	pre-commit install
 
 .PHONY: pytest
 pytest:
