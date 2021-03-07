@@ -4,7 +4,7 @@
 # 	Author: Huan LI <zixia@zixia.net> git.io/zixia
 #
 
-SOURCE_GLOB=$(wildcard bin/*.py src/**/*.py tests/**/*.py examples/*.py)
+SOURCE_GLOB=$(wildcard bin/*.py src/**/*.py tests/**/*.py)
 
 #
 # Huan(202003)
@@ -56,14 +56,31 @@ pytype:
 	pytype -V 3.8 \
 		--disable=import-error,pyi-error \
 		src/
-	pytype -V 3.8 \
-		--disable=import-error \
-		examples/
+
+.PHONY: uninstall-git-hook
+uninstall-git-hook:
+	pre-commit clean
+	pre-commit gc
+	pre-commit uninstall
+	pre-commit uninstall --hook-type pre-push
+
+.PHONY: install-git-hook
+install-git-hook:
+	# cleanup existing pre-commit configuration (if any)
+	pre-commit clean
+	pre-commit gc
+	# setup pre-commit
+	# Ensures pre-commit hooks point to latest versions
+	pre-commit autoupdate
+	pre-commit install
+	pre-commit install --overwrite --hook-type pre-push
 
 .PHONY: install
 install:
 	pip3 install -r requirements.txt
 	pip3 install -r requirements-dev.txt
+	# install pre-commit related hook scripts
+	$(MAKE) install-git-hook
 
 .PHONY: pytest
 pytest:
@@ -89,10 +106,6 @@ dist:
 .PHONY: publish
 publish:
 	PATH=~/.local/bin:${PATH} twine upload dist/*
-
-.PHONY: demo
-demo:
-	python3 examples/demo.py
 
 .PHONY: version
 version:
