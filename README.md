@@ -11,7 +11,7 @@ Python Service Puppet for Wechaty
 
 ## Features
 
-1. Consume Service service
+1. Consume Wechaty Puppet Service
 
 ## Usage
 
