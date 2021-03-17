@@ -501,12 +501,19 @@ class PuppetService(Puppet):
 
     async def message_url(self, message_id: str) -> UrlLinkPayload:
         """
-        extract url
+        extract url_link payload data from response
         :param message_id:
         :return:
         """
         response = await self.puppet_stub.message_url(id=message_id)
-        return UrlLinkPayload(url=response.url_link)
+        # parse url_link data from response
+        payload_data = json.loads(response.url_link)
+        return UrlLinkPayload(
+            url=payload_data.get('url', ''),
+            title=payload_data.get('title', ''),
+            description=payload_data.get('description', ''),
+            thumbnailUrl=payload_data.get('thumbnailUrl', ''),
+        )
 
     async def message_mini_program(self, message_id: str) -> MiniProgramPayload:
         """
