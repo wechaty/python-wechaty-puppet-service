@@ -19,8 +19,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import os
+# TODO: need to fix error -> found module but no type hints or library stubs
+from wechaty_puppet import get_logger   # type: ignore
+
+logger = get_logger('WechatyPuppetServiceConfig')
 
 
-WECHATY_PUPPET_SERVICE_TOKEN = os.environ.get('WECHATY_PUPPET_SERVICE_TOKEN')
+def get_token():
+    """
+    get the token from environment variable
+    """
+    return os.environ.get('WECHATY_PUPPET_SERVICE_TOKEN', None) or \
+        os.environ.get('TOKEN', None) or \
+        os.environ.get('token', None) or None
+
+
+WECHATY_PUPPET_SERVICE_TOKEN = get_token()
+
 WECHATY_PUPPET_SERVICE_ENDPOINT = os.environ.get(
     'WECHATY_PUPPET_SERVICE_ENDPOINT')
