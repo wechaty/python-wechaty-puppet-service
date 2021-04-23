@@ -36,6 +36,14 @@ The token set to this environment variable will become the default value of `pup
 WECHATY_PUPPET_SERVICE_TOKEN=secret python bot.py
 ```
 
+or you can use `TOKEN` or `token` environment variable alias name to set **token**, for example:
+
+```shell
+TOKEN=secret python bot.py
+# or
+token=secret python bot.py
+```
+
 ## History
 
 ### master
