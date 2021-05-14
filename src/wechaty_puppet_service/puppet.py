@@ -882,7 +882,6 @@ class PuppetService(Puppet):
                 'Please set a valid WECHATY_PUPPET_SERVICE_TOKEN or '
                 'WECHATY_PUPPET_SERVICE_ENDPOINT in environment/options'
             )
-            
         # otherwise load them from server by the token
         if not self.options.end_point:
             # Query the end_point by the token.
