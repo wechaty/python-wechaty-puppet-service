@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import json
 import re
+import os
 from typing import Optional, List
 from functools import reduce
 from dataclasses import asdict
@@ -171,8 +172,25 @@ class PuppetService(Puppet):
         Raises:
             WechatyPuppetConfigurationError: raise Error when configuraiton occur error
         """
-        options.token = options.token or WECHATY_PUPPET_SERVICE_TOKEN
-        options.end_point = options.end_point or WECHATY_PUPPET_SERVICE_ENDPOINT
+        if options.token is None:
+            if WECHATY_PUPPET_SERVICE_TOKEN is None:
+                # TODO: this checking should be removed after 0.6.10 version
+                if 'WECHATY_PUPPET_HOSTIE_TOKEN' in os.environ:
+                    log.warning('WECHATY_PUPPET_HOSTIE_TOKEN environment '
+                                'will be deprecated after 0.6.10 version, so '
+                                'please use new environment '
+                                'name<WECHATY_PUPPET_SERVICE_TOKEN> to avoid '
+                                'unnecessary bugs')
+                    options.token = os.environ['WECHATY_PUPPET_HOSTIE_TOKEN']
+                else:
+                    raise WechatyPuppetConfigurationError(
+                        'wechaty-puppet-service: token not found. please set '
+                        'environment<WECHATY_PUPPET_SERVICE_TOKEN> as token'
+                    )
+            options.token = WECHATY_PUPPET_SERVICE_TOKEN
+
+        if options.end_point is None and WECHATY_PUPPET_SERVICE_ENDPOINT is not None:
+            options.end_point = WECHATY_PUPPET_SERVICE_ENDPOINT
 
         super().__init__(options, name)
 
@@ -211,14 +229,16 @@ class PuppetService(Puppet):
         :param image_type:
         :return:
         """
-        response = await self.puppet_stub.message_image(id=message_id, type=image_type)
-        json_response = json.loads(response.filebox)
-        if 'base64' not in json_response:
-            raise WechatyPuppetGrpcError('image response data structure is not correct')
-        file_box = FileBox.from_base64(
-            json_response['base64'],
-            name=json_response['name']
-        )
+        file_chunk_data: List[bytes] = []
+        name: str = ''
+
+        async for stream in self.puppet_stub.message_image_stream(id=message_id, type=image_type):
+            file_chunk_data.append(stream.file_box_chunk.data)
+            if not name and stream.file_box_chunk.name:
+                name = stream.file_box_chunk.name
+
+        file_stream = reduce(lambda pre, cu: pre + cu, file_chunk_data)
+        file_box = FileBox.from_stream(file_stream, name=name)
         return file_box
 
     def on(self, event_name: str, caller):
@@ -856,13 +876,13 @@ class PuppetService(Puppet):
         """
         start puppet channel contact_self_qr_code
         """
-        log.info('init puppet connection ...')
+        log.info('init puppet')
         if not self.options.token and not self.options.end_point:
             raise WechatyPuppetConfigurationError(
                 'Please set a valid WECHATY_PUPPET_SERVICE_TOKEN or '
                 'WECHATY_PUPPET_SERVICE_ENDPOINT in environment/options'
             )
-
+            
         # otherwise load them from server by the token
         if not self.options.end_point:
             # Query the end_point by the token.
