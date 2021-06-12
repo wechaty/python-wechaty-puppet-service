@@ -22,7 +22,6 @@ from __future__ import annotations
 
 import json
 import re
-import os
 from typing import Optional, List
 from functools import reduce
 from dataclasses import asdict
@@ -81,8 +80,8 @@ from wechaty_puppet.exceptions import (  # type: ignore
 )
 
 from wechaty_puppet_service.config import (
-    WECHATY_PUPPET_SERVICE_ENDPOINT,
-    WECHATY_PUPPET_SERVICE_TOKEN,
+    get_endpoint,
+    get_token,
 )
 
 log = get_logger('HostiePuppet')
@@ -172,25 +171,16 @@ class PuppetService(Puppet):
         Raises:
             WechatyPuppetConfigurationError: raise Error when configuraiton occur error
         """
-        if options.token is None:
-            if WECHATY_PUPPET_SERVICE_TOKEN is None:
-                # TODO: this checking should be removed after 0.6.10 version
-                if 'WECHATY_PUPPET_HOSTIE_TOKEN' in os.environ:
-                    log.warning('WECHATY_PUPPET_HOSTIE_TOKEN environment '
-                                'will be deprecated after 0.6.10 version, so '
-                                'please use new environment '
-                                'name<WECHATY_PUPPET_SERVICE_TOKEN> to avoid '
-                                'unnecessary bugs')
-                    options.token = os.environ['WECHATY_PUPPET_HOSTIE_TOKEN']
-                else:
-                    raise WechatyPuppetConfigurationError(
-                        'wechaty-puppet-service: token not found. please set '
-                        'environment<WECHATY_PUPPET_SERVICE_TOKEN> as token'
-                    )
-            options.token = WECHATY_PUPPET_SERVICE_TOKEN
+        token, endpoint = get_token(), get_endpoint()
 
-        if options.end_point is None and WECHATY_PUPPET_SERVICE_ENDPOINT is not None:
-            options.end_point = WECHATY_PUPPET_SERVICE_ENDPOINT
+        if not options.token and not token:
+            raise WechatyPuppetConfigurationError(
+                'wechaty-puppet-service: token not found. please set '
+                'environment<WECHATY_PUPPET_SERVICE_TOKEN|TOKEN|token> as token'
+            )
+
+        options.token = options.token or token
+        options.end_point = options.end_point or endpoint
 
         super().__init__(options, name)
 
@@ -879,8 +869,8 @@ class PuppetService(Puppet):
         log.info('init puppet')
         if not self.options.token and not self.options.end_point:
             raise WechatyPuppetConfigurationError(
-                'Please set a valid WECHATY_PUPPET_SERVICE_TOKEN or '
-                'WECHATY_PUPPET_SERVICE_ENDPOINT in environment/options'
+                'Please set a valid envrioment<WECHATY_PUPPET_SERVICE_TOKEN|ENDPOINT|endpoint> or '
+                '<WECHATY_PUPPET_SERVICE_ENDPOINT|ENDPOINT|endpoint>'
             )
         # otherwise load them from server by the token
         if not self.options.end_point:

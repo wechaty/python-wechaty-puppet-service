@@ -34,7 +34,10 @@ def get_token():
         os.environ.get('token', None) or None
 
 
-WECHATY_PUPPET_SERVICE_TOKEN = get_token()
-
-WECHATY_PUPPET_SERVICE_ENDPOINT = os.environ.get(
-    'WECHATY_PUPPET_SERVICE_ENDPOINT')
+def get_endpoint():
+    """
+    get the endpoint from environment variable
+    """
+    return os.environ.get('WECHATY_PUPPET_SERVICE_ENDPOINT', None) or \
+        os.environ.get('ENDPOINT', None) or \
+        os.environ.get('endpoint', None) or None
