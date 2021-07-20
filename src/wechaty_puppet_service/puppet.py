@@ -579,7 +579,7 @@ class PuppetService(Puppet):
 
     def self_id(self) -> str:
         """
-        # TODO -> how to get self_id, nwo wechaty has save login_user
+        # TODO -> how to get self_id, now wechaty has save login_user
             contact_id
         :return:
         """
