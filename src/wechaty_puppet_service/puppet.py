@@ -644,7 +644,8 @@ class PuppetService(Puppet):
         """
         await self.puppet_stub.friendship_accept(id=friendship_id)
 
-    async def room_create(self, contact_ids: List[str], topic: str = None
+    async def room_create(self, contact_ids: List[str],
+                          topic: Optional[str] = None
                           ) -> str:
         """
         create room
@@ -658,7 +659,8 @@ class PuppetService(Puppet):
         )
         return response.id
 
-    async def room_search(self, query: RoomQueryFilter = None) -> List[str]:
+    async def room_search(self,
+                          query: Optional[RoomQueryFilter] = None) -> List[str]:
         """
         find the room_ids
         search room
@@ -795,7 +797,7 @@ class PuppetService(Puppet):
         await self.puppet_stub.room_topic(id=room_id, topic=new_topic)
 
     async def room_announce(self, room_id: str,
-                            announcement: str = None) -> str:
+                            announcement: Optional[str] = None) -> str:
         """
         get/set announce
         :param room_id:
