@@ -321,7 +321,8 @@ class PuppetService(Puppet):
         return response.ids
 
     async def message_send_text(self, conversation_id: str, message: str,
-                                mention_ids: List[str] = None) -> str:
+                                mention_ids: Optional[List[str]] = None
+                                ) -> str:
         """
         send text message
         :param conversation_id:
