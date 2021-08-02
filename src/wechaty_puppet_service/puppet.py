@@ -21,7 +21,6 @@ limitations under the License.
 from __future__ import annotations
 
 import json
-import re
 from typing import Optional, List
 from functools import reduce
 from dataclasses import asdict
@@ -35,7 +34,7 @@ from wechaty_grpc.wechaty import (  # type: ignore
 from grpclib.client import Channel
 # pylint: disable=E0401
 from pyee import AsyncIOEventEmitter  # type: ignore
-
+from ping3 import ping  # type: ignore
 from wechaty_puppet.schemas.types import PayloadType    # type: ignore
 
 from wechaty_puppet import (  # type: ignore
@@ -83,6 +82,7 @@ from wechaty_puppet_service.config import (
     get_endpoint,
     get_token,
 )
+from wechaty_puppet_service.utils import extract_host_and_port
 
 log = get_logger('HostiePuppet')
 
@@ -321,7 +321,8 @@ class PuppetService(Puppet):
         return response.ids
 
     async def message_send_text(self, conversation_id: str, message: str,
-                                mention_ids: List[str] = None) -> str:
+                                mention_ids: Optional[List[str]] = None
+                                ) -> str:
         """
         send text message
         :param conversation_id:
@@ -643,7 +644,8 @@ class PuppetService(Puppet):
         """
         await self.puppet_stub.friendship_accept(id=friendship_id)
 
-    async def room_create(self, contact_ids: List[str], topic: str = None
+    async def room_create(self, contact_ids: List[str],
+                          topic: Optional[str] = None
                           ) -> str:
         """
         create room
@@ -657,7 +659,8 @@ class PuppetService(Puppet):
         )
         return response.id
 
-    async def room_search(self, query: RoomQueryFilter = None) -> List[str]:
+    async def room_search(self,
+                          query: Optional[RoomQueryFilter] = None) -> List[str]:
         """
         find the room_ids
         search room
@@ -794,7 +797,7 @@ class PuppetService(Puppet):
         await self.puppet_stub.room_topic(id=room_id, topic=new_topic)
 
     async def room_announce(self, room_id: str,
-                            announcement: str = None) -> str:
+                            announcement: Optional[str] = None) -> str:
         """
         get/set announce
         :param room_id:
@@ -895,13 +898,12 @@ class PuppetService(Puppet):
             log.debug('get puppet ip address : <%s>', data)
             self.options.end_point = '{ip}:{port}'.format(**data)
 
-        if not re.match(r'^(?:(?!-)[\d\w-]{1,63}(?<!-)\.)+(?!-)[\d\w]{1,63}(?<!-):\d{2,5}$',
-                        self.options.end_point):
+        if ping(self.options.end_point) is False:
             raise WechatyPuppetConfigurationError(
-                'Malformed endpoint format, should be {hostname}:{port}'
+                f"can't not ping endpoint: {self.options.end_point}"
             )
 
-        host, port = self.options.end_point.split(':')
+        host, port = extract_host_and_port(self.options.end_point)
         self.channel = Channel(host=host, port=port)
 
         # pylint: disable=W0212

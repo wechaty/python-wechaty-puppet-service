@@ -1,3 +1,4 @@
 pyee
 requests
 wechaty-grpc~=0.20.19
+ping3
