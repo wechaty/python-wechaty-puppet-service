@@ -900,7 +900,7 @@ class PuppetService(Puppet):
 
         if ":" not in self.options.end_point:
             raise WechatyPuppetConfigurationError(
-                "Malformed endpoint format, should be {hostname}:{port}."
+                "Malformed endpoint format, should be {hostname}:{port}"
             )
 
         if ping(self.options.end_point.split(':')[0]) is False:
