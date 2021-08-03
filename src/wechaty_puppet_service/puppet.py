@@ -898,7 +898,12 @@ class PuppetService(Puppet):
             log.debug('get puppet ip address : <%s>', data)
             self.options.end_point = '{ip}:{port}'.format(**data)
 
-        if ping(self.options.end_point) is False:
+        if ":" not in self.options.end_point:
+            raise WechatyPuppetConfigurationError(
+                "Malformed endpoint format, should be {hostname}:{port}"
+            )
+
+        if ping(self.options.end_point.split(':')[0]) is False:
             raise WechatyPuppetConfigurationError(
                 f"can't not ping endpoint: {self.options.end_point}"
             )
