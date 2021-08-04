@@ -900,7 +900,7 @@ class PuppetService(Puppet):
             log.debug('get puppet ip address : <%s>', data)
             self.options.end_point = '{ip}:{port}'.format(**data)
 
-        if test_endpoint(self.options.end_point) is False:
+        if test_endpoint(self.options.end_point, log) is False:
             raise WechatyPuppetConfigurationError(
                 f"can't not ping endpoint: {self.options.end_point}"
             )
