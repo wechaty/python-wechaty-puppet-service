@@ -34,7 +34,6 @@ from wechaty_grpc.wechaty import (  # type: ignore
 from grpclib.client import Channel
 # pylint: disable=E0401
 from pyee import AsyncIOEventEmitter  # type: ignore
-from ping3 import ping  # type: ignore
 from wechaty_puppet.schemas.types import PayloadType    # type: ignore
 
 from wechaty_puppet import (  # type: ignore
@@ -82,7 +81,10 @@ from wechaty_puppet_service.config import (
     get_endpoint,
     get_token,
 )
-from wechaty_puppet_service.utils import extract_host_and_port
+from wechaty_puppet_service.utils import (
+    extract_host_and_port,
+    test_endpoint
+)
 
 log = get_logger('HostiePuppet')
 
@@ -898,13 +900,7 @@ class PuppetService(Puppet):
             log.debug('get puppet ip address : <%s>', data)
             self.options.end_point = '{ip}:{port}'.format(**data)
 
-        ping_ret = False
-        try:
-            ping_ret = ping(self.options.end_point)
-        except Exception as e:
-            log.error(f'ping endpoint {self.options.end_point} raise an exception\n{e}')
-
-        if ping_ret is False:
+        if test_endpoint(self.options.end_point, log) is False:
             raise WechatyPuppetConfigurationError(
                 f"can't not ping endpoint: {self.options.end_point}"
             )
