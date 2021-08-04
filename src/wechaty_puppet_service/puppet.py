@@ -34,7 +34,6 @@ from wechaty_grpc.wechaty import (  # type: ignore
 from grpclib.client import Channel
 # pylint: disable=E0401
 from pyee import AsyncIOEventEmitter  # type: ignore
-from ping3 import ping  # type: ignore
 from wechaty_puppet.schemas.types import PayloadType    # type: ignore
 
 from wechaty_puppet import (  # type: ignore

@@ -44,7 +44,7 @@ def extract_host_and_port(url: str) -> Tuple[str, Optional[int]]:
     return url, None
 
 
-def test_endpoint(end_point: str) -> float:
+def test_endpoint(end_point: str) -> int:
     """
         test_endpoint:
         1.If there is port: telnet
@@ -52,11 +52,14 @@ def test_endpoint(end_point: str) -> float:
     """
     tn = Telnet()
     host, port = extract_host_and_port(end_point)
+
+    res = True
     if port is None:
-        return ping(host)
+        if ping(host) is False:
+            res = False
     else:
         try:
             tn.open(host, port=port)
         except Exception:
-            return False
-    return True
+            res = False
+    return res
