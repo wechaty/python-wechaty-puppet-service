@@ -25,7 +25,7 @@ from telnetlib import Telnet
 import socket
 from logging import Logger
 from typing import Optional, Tuple
-from ping3 import ping  # type: ignore
+from ping3 import ping, errors  # type: ignore
 from wechaty_puppet.exceptions import WechatyPuppetConfigurationError  # type: ignore
 
 
@@ -58,7 +58,14 @@ def test_endpoint(end_point: str, log: Logger) -> int:
 
     res = True
     if port is None:
-        if ping(host) is False:
+        try:
+            if ping(host) is False:
+                res = False
+        except PermissionError as pe:
+            log.error(pe)
+            res = False
+        except errors.PingError as e:
+            log.error(f'got a ping error:\n{e}')
             res = False
     else:
         try:
