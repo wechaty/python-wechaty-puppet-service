@@ -20,8 +20,13 @@ limitations under the License.
 """
 from __future__ import annotations
 
+from telnetlib import Telnet
+
+import socket
+from logging import Logger
 from typing import Optional, Tuple
-from wechaty_puppet.exceptions import WechatyPuppetConfigurationError   # type: ignore
+from ping3 import ping  # type: ignore
+from wechaty_puppet.exceptions import WechatyPuppetConfigurationError  # type: ignore
 
 
 def extract_host_and_port(url: str) -> Tuple[str, Optional[int]]:
@@ -40,3 +45,25 @@ def extract_host_and_port(url: str) -> Tuple[str, Optional[int]]:
         return host, int(port)
 
     return url, None
+
+
+def test_endpoint(end_point: str, log: Logger) -> int:
+    """
+        test_endpoint:
+        1.If there is port: telnet
+        2.If there is host/domain: ping or
+    """
+    tn = Telnet()
+    host, port = extract_host_and_port(end_point)
+
+    res = True
+    if port is None:
+        if ping(host) is False:
+            res = False
+    else:
+        try:
+            tn.open(host, port=port)
+        except socket.error as e:
+            log.error(e)
+            res = False
+    return res
