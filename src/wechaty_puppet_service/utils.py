@@ -25,7 +25,7 @@ from telnetlib import Telnet
 import socket
 from logging import Logger
 from typing import Optional, Tuple
-from ping3 import ping
+from ping3 import ping  # type: ignore
 from wechaty_puppet.exceptions import WechatyPuppetConfigurationError  # type: ignore
 
 
