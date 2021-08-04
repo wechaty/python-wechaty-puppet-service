@@ -82,7 +82,10 @@ from wechaty_puppet_service.config import (
     get_endpoint,
     get_token,
 )
-from wechaty_puppet_service.utils import extract_host_and_port
+from wechaty_puppet_service.utils import (
+    extract_host_and_port,
+    test_endpoint
+)
 
 log = get_logger('HostiePuppet')
 
@@ -898,12 +901,7 @@ class PuppetService(Puppet):
             log.debug('get puppet ip address : <%s>', data)
             self.options.end_point = '{ip}:{port}'.format(**data)
 
-        if ':' not in self.options.end_point:
-            raise WechatyPuppetConfigurationError(
-                'Malformed endpoint format, should be {hostname}:{port}'
-            )
-
-        if ping(self.options.end_point.split(':')[0]) is False:
+        if test_endpoint(self.options.end_point) is False:
             raise WechatyPuppetConfigurationError(
                 f"can't not ping endpoint: {self.options.end_point}"
             )
