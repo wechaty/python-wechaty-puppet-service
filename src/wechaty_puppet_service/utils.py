@@ -21,9 +21,11 @@ limitations under the License.
 from __future__ import annotations
 
 from telnetlib import Telnet
-from ping3 import ping
+
+import socket
 from logging import Logger
 from typing import Optional, Tuple
+from ping3 import ping
 from wechaty_puppet.exceptions import WechatyPuppetConfigurationError  # type: ignore
 
 
@@ -61,7 +63,7 @@ def test_endpoint(end_point: str, log: Logger) -> int:
     else:
         try:
             tn.open(host, port=port)
-        except Exception as e:
+        except socket.error as e:
             log.error(e)
             res = False
     return res
