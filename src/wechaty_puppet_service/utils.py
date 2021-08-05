@@ -30,11 +30,15 @@ from wechaty_puppet.exceptions import WechatyPuppetConfigurationError  # type: i
 
 
 def extract_host_and_port(url: str) -> Tuple[str, Optional[int]]:
-    """it shoule be <host>:<port> format, but it can be a service name.
-    If it's in docker cluster network, the port can be None
+    """
+    It shoule be <host>:<port> format, but it can be a service name.
+    If it's in docker cluster network, the port can be None.
 
     Args:
         url (str): the service endpoint or names
+
+    Return:
+        host (str), port (Optional[int])
     """
     if ':' in url:
         host, port = url.split(':')
@@ -49,9 +53,18 @@ def extract_host_and_port(url: str) -> Tuple[str, Optional[int]]:
 
 def test_endpoint(end_point: str, log: Logger) -> int:
     """
-        test_endpoint:
-        1.If there is port: telnet
-        2.If there is host/domain: ping or
+    Check end point is valid
+    Use different method:
+        1. If there is port: telnet
+        2. If there is host/domain: ping
+
+    Args:
+        end_point (str): host and port
+        log (Logger): for debug
+
+    Return:
+        return True if end point is valid, otherwise False
+
     """
     tn = Telnet()
     host, port = extract_host_and_port(end_point)
