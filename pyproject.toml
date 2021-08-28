@@ -1,0 +1,17 @@
+[tool.mypy]
+disallow_untyped_defs = true
+warn_unused_ignores = true
+ignore_missing_imports = false
+
+[[tool.mypy.overrides]]
+module = [
+    "wechaty_puppet.*",
+    "wechaty_puppet_service.*",
+    "pytest.*",
+    "grpclib.*",
+    "lxml.*",
+    "ping3.*",
+    "wechaty_grpc.*",
+    "pyee.*"
+]
+ignore_missing_imports = true

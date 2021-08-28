@@ -25,8 +25,8 @@ from telnetlib import Telnet
 import socket
 from logging import Logger
 from typing import Optional, Tuple
-from ping3 import ping, errors  # type: ignore
-from wechaty_puppet.exceptions import WechatyPuppetConfigurationError  # type: ignore
+from ping3 import ping, errors
+from wechaty_puppet.exceptions import WechatyPuppetConfigurationError
 
 
 def extract_host_and_port(url: str) -> Tuple[str, Optional[int]]:
