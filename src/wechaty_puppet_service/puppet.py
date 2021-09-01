@@ -959,7 +959,7 @@ class PuppetService(Puppet):
         except Exception as exception:
             log.error('logout() rejection %s', exception)
         finally:
-            payload = EventLogoutPayload(contact_id=self.login_user_id)
+            payload = EventLogoutPayload(contact_id=self.login_user_id, data='logout')
             self._event_stream.emit('logout', payload)
             self.login_user_id = None
 
