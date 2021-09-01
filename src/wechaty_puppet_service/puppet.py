@@ -21,22 +21,22 @@ limitations under the License.
 from __future__ import annotations
 
 import json
-from typing import Optional, List
+from typing import Callable, Optional, List
 from functools import reduce
 from dataclasses import asdict
-import xml.dom.minidom  # type: ignore
+import xml.dom.minidom
 import requests
 
-from wechaty_grpc.wechaty import (  # type: ignore
+from wechaty_grpc.wechaty import (
     PuppetStub,
 )
 # pylint: disable=E0401
 from grpclib.client import Channel
 # pylint: disable=E0401
-from pyee import AsyncIOEventEmitter  # type: ignore
-from wechaty_puppet.schemas.types import PayloadType    # type: ignore
+from pyee import AsyncIOEventEmitter
+from wechaty_puppet.schemas.types import PayloadType
 
-from wechaty_puppet import (  # type: ignore
+from wechaty_puppet import (
     EventScanPayload,
     ScanStatus,
 
@@ -69,7 +69,7 @@ from wechaty_puppet import (  # type: ignore
     get_logger
 )
 
-from wechaty_puppet.exceptions import (  # type: ignore
+from wechaty_puppet.exceptions import (
     WechatyPuppetConfigurationError,
     WechatyPuppetError,
     WechatyPuppetGrpcError,
@@ -86,7 +86,7 @@ from wechaty_puppet_service.utils import (
     test_endpoint
 )
 
-log = get_logger('HostiePuppet')
+log = get_logger('PuppetService')
 
 
 def _map_message_type(message_payload: MessagePayload) -> MessagePayload:
@@ -233,7 +233,7 @@ class PuppetService(Puppet):
         file_box = FileBox.from_stream(file_stream, name=name)
         return file_box
 
-    def on(self, event_name: str, caller):
+    def on(self, event_name: str, caller: Callable[..., None]) -> None:
         """
         listen event from the wechaty
         :param event_name:
@@ -281,7 +281,7 @@ class PuppetService(Puppet):
         # wechaty_grpc has not implement this function
         return None
 
-    async def tag_contact_add(self, tag_id: str, contact_id: str):
+    async def tag_contact_add(self, tag_id: str, contact_id: str) -> None:
         """
         add a tag to contact
         :param tag_id:
@@ -291,7 +291,7 @@ class PuppetService(Puppet):
         await self.puppet_stub.tag_contact_add(
             id=tag_id, contact_id=contact_id)
 
-    async def tag_favorite_add(self, tag_id: str, contact_id: str):
+    async def tag_favorite_add(self, tag_id: str, contact_id: str) -> None:
         """
         add a tag to favorite
         :param tag_id:
@@ -300,7 +300,7 @@ class PuppetService(Puppet):
         """
         # wechaty_grpc has not implement this function
 
-    async def tag_contact_remove(self, tag_id: str, contact_id: str):
+    async def tag_contact_remove(self, tag_id: str, contact_id: str) -> None:
         """
         remove a tag from contact
         :param tag_id:
@@ -422,7 +422,7 @@ class PuppetService(Puppet):
 
         return _map_message_type(response)
 
-    async def message_forward(self, to_id: str, message_id: str):
+    async def message_forward(self, to_id: str, message_id: str) -> None:
         """
         forward the message
         :param to_id:
@@ -543,7 +543,7 @@ class PuppetService(Puppet):
             raise WechatyPuppetGrpcError('can"t get contact<%s> alias' % contact_id)
         return response.alias
 
-    async def contact_payload_dirty(self, contact_id: str):
+    async def contact_payload_dirty(self, contact_id: str) -> None:
         """
         mark the contact payload dirty status, and remove it from the cache
         """
@@ -612,7 +612,7 @@ class PuppetService(Puppet):
                 return phone_response.contact_id
         return None
 
-    async def friendship_add(self, contact_id: str, hello: str):
+    async def friendship_add(self, contact_id: str, hello: str) -> None:
         """
         try to add friendship
         :param contact_id:
@@ -638,7 +638,7 @@ class PuppetService(Puppet):
         )
         return response
 
-    async def friendship_accept(self, friendship_id: str):
+    async def friendship_accept(self, friendship_id: str) -> None:
         """
         accept friendship
         :param friendship_id:
@@ -685,7 +685,7 @@ class PuppetService(Puppet):
         )
         return RoomInvitationPayload(**response.to_dict())
 
-    async def room_invitation_accept(self, room_invitation_id: str):
+    async def room_invitation_accept(self, room_invitation_id: str) -> None:
         """
         accept the room invitation
         :param room_invitation_id:
@@ -701,7 +701,7 @@ class PuppetService(Puppet):
         response = await self.puppet_stub.contact_self_qr_code()
         return response.qrcode
 
-    async def contact_self_name(self, name: str):
+    async def contact_self_name(self, name: str) -> None:
         """
         set the name of the contact
         :param name:
@@ -709,7 +709,7 @@ class PuppetService(Puppet):
         """
         await self.puppet_stub.contact_self_name(name=name)
 
-    async def contact_signature(self, signature: str):
+    async def contact_signature(self, signature: str) -> None:
         """
 
         :param signature:
@@ -723,7 +723,7 @@ class PuppetService(Puppet):
         :return:
         """
 
-    async def room_payload_dirty(self, room_id: str):
+    async def room_payload_dirty(self, room_id: str) -> None:
         """
         mark the room payload dirty status, and remove it from the cache
         :param room_id:
@@ -734,7 +734,7 @@ class PuppetService(Puppet):
             room_id
         )
 
-    async def room_member_payload_dirty(self, room_id: str):
+    async def room_member_payload_dirty(self, room_id: str) -> None:
         """
         mark the room-member payload dirty status, and remove it from the cache
         :param room_id:
@@ -763,7 +763,7 @@ class PuppetService(Puppet):
         response = await self.puppet_stub.room_member_list(id=room_id)
         return response.member_ids
 
-    async def room_add(self, room_id: str, contact_id: str):
+    async def room_add(self, room_id: str, contact_id: str) -> None:
         """
         add contact to room
         :param room_id:
@@ -772,7 +772,7 @@ class PuppetService(Puppet):
         """
         await self.puppet_stub.room_add(id=room_id, contact_id=contact_id)
 
-    async def room_delete(self, room_id: str, contact_id: str):
+    async def room_delete(self, room_id: str, contact_id: str) -> None:
         """
         delete contact from room
         :param room_id:
@@ -781,7 +781,7 @@ class PuppetService(Puppet):
         """
         await self.puppet_stub.room_del(id=room_id, contact_id=contact_id)
 
-    async def room_quit(self, room_id: str):
+    async def room_quit(self, room_id: str) -> None:
         """
         quit from room
         :param room_id:
@@ -789,7 +789,7 @@ class PuppetService(Puppet):
         """
         await self.puppet_stub.room_quit(id=room_id)
 
-    async def room_topic(self, room_id: str, new_topic: str):
+    async def room_topic(self, room_id: str, new_topic: str) -> None:
         """
         set/set topic of the room
         :param room_id:
@@ -858,7 +858,7 @@ class PuppetService(Puppet):
         )
         return file_box
 
-    async def dirty_payload(self, payload_type: PayloadType, payload_id: str):
+    async def dirty_payload(self, payload_type: PayloadType, payload_id: str) -> None:
         """
         mark the payload dirty status, and remove it from the cache
         """
@@ -867,7 +867,7 @@ class PuppetService(Puppet):
             id=payload_id
         )
 
-    def _init_puppet(self):
+    def _init_puppet(self) -> None:
         """
         start puppet channel contact_self_qr_code
         """
@@ -931,7 +931,7 @@ class PuppetService(Puppet):
         await self._listen_for_event()
         return None
 
-    async def stop(self):
+    async def stop(self) -> None:
         """
         stop the grpc channel connection
         """
@@ -944,7 +944,7 @@ class PuppetService(Puppet):
             self.channel.close()
             self.channel = None
 
-    async def logout(self):
+    async def logout(self) -> None:
         """
         logout the account
         :return:
@@ -959,11 +959,11 @@ class PuppetService(Puppet):
         except Exception as exception:
             log.error('logout() rejection %s', exception)
         finally:
-            payload = EventLogoutPayload(contact_id=self.login_user_id)
+            payload = EventLogoutPayload(contact_id=self.login_user_id, data='logout')
             self._event_stream.emit('logout', payload)
             self.login_user_id = None
 
-    async def login(self, user_id: str):
+    async def login(self, user_id: str) -> None:
         """
         login the account
         :return:
@@ -972,7 +972,7 @@ class PuppetService(Puppet):
         payload = EventLoginPayload(contact_id=user_id)
         self._event_stream.emit('login', payload)
 
-    async def ding(self, data: Optional[str] = ''):
+    async def ding(self, data: Optional[str] = '') -> None:
         """
         set the ding event
         :param data:
@@ -983,7 +983,7 @@ class PuppetService(Puppet):
         await self.puppet_stub.ding(data=data)
 
     # pylint: disable=R0912,R0915
-    async def _listen_for_event(self):
+    async def _listen_for_event(self) -> None:
         """
         listen event from service server with heartbeat
         """

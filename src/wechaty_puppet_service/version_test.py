@@ -1,7 +1,7 @@
 """
 version unit test, this file will be updated in deploy stage.
 """
-# import pytest   # type: ignore
+# import pytest
 
 from .version import VERSION
 

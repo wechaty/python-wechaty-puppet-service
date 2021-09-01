@@ -19,13 +19,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import os
-# TODO: need to fix error -> found module but no type hints or library stubs
-from wechaty_puppet import get_logger   # type: ignore
+from typing import Optional
+from wechaty_puppet import get_logger
 
 logger = get_logger('WechatyPuppetServiceConfig')
 
+# send 1M data in every async request
+CHUNK_SIZE = 1024 * 1024
 
-def get_token():
+
+def get_token() -> Optional[str]:
     """
     get the token from environment variable
     """
@@ -34,7 +37,7 @@ def get_token():
         os.environ.get('token', None) or None
 
 
-def get_endpoint():
+def get_endpoint() -> Optional[str]:
     """
     get the endpoint from environment variable
     """
