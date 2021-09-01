@@ -85,6 +85,7 @@ from wechaty_puppet_service.utils import (
     extract_host_and_port,
     test_endpoint
 )
+from wechaty_puppet_service.file_box_chunk.file_box_chunk_converter import gen_file_stream_request
 
 log = get_logger('PuppetService')
 
@@ -359,9 +360,10 @@ class PuppetService(Puppet):
         :param file:
         :return:
         """
-        response = await self.puppet_stub.message_send_file(
-            conversation_id=conversation_id,
-            filebox=file.to_json_str()
+
+        request_stream = gen_file_stream_request(conversation_id, file)
+        response = await self.puppet_stub.message_send_file_stream(
+            request_iterator=request_stream
         )
         return response.id
 
