@@ -29,7 +29,7 @@ lint: pylint pycodestyle flake8 mypy pytype
 pylint:
 	pylint \
 		--load-plugins pylint_quotes \
-		--disable W0511,C0302 \
+		--disable W0511,C0302,W1203 \
 		$(SOURCE_GLOB)
 
 .PHONY: pycodestyle
@@ -53,8 +53,7 @@ mypy:
 
 .PHONE: pytype
 pytype:
-	pytype -V 3.8 \
-		--disable=import-error,pyi-error \
+	pytype --disable=import-error,pyi-error \
 		src/
 
 .PHONY: uninstall-git-hook
