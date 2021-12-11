@@ -24,7 +24,6 @@ import json
 from typing import Callable, Optional, List
 from functools import reduce
 from dataclasses import asdict
-import xml.dom.minidom
 import requests
 
 from wechaty_grpc.wechaty import (
@@ -83,7 +82,8 @@ from wechaty_puppet_service.config import (
 )
 from wechaty_puppet_service.utils import (
     extract_host_and_port,
-    test_endpoint
+    ping_endpoint,
+    message_emoticon
 )
 
 log = get_logger('PuppetService')
@@ -164,27 +164,44 @@ class PuppetService(Puppet):
     """
 
     def __init__(self, options: PuppetOptions, name: str = 'puppet_service'):
-        """init PuppetService from options or envrionment
+        """init PuppetService from options or environment
 
         Args:
             options (PuppetOptions): the configuration of PuppetService
             name (str, optional): [description]. Defaults to 'service_puppet'.
 
         Raises:
-            WechatyPuppetConfigurationError: raise Error when configuraiton occur error
+            WechatyPuppetConfigurationError: raise Error when configuration occur error
         """
+        super().__init__(options, name)
         token, endpoint = get_token(), get_endpoint()
 
-        if not options.token and not token:
-            raise WechatyPuppetConfigurationError(
-                'wechaty-puppet-service: token not found. please set '
-                'environment<WECHATY_PUPPET_SERVICE_TOKEN|TOKEN|token> as token'
+        # 1. checking the endpoint & token configuration
+        if options.end_point and endpoint:
+            log.warning(
+                f'there are two endpoints from options<{options.end_point}> '
+                f'and environment<{endpoint}>, and the first one is adopted'
             )
 
-        options.token = options.token or token
-        options.end_point = options.end_point or endpoint
+        if options.token and token:
+            log.warning(
+                f'there are two tokens from options[adopted]<{options.token}> '
+                f'and environment<{token}>, and the first one is adopted'
+            )
 
-        super().__init__(options, name)
+        options.end_point = options.end_point or endpoint
+        options.token = options.token or token
+
+        if not options.end_point and not options.token:
+            raise WechatyPuppetConfigurationError(
+                'one of <endpoint> and <token> configuration is required, '
+                'you should set environment<WECHATY_PUPPET_SERVICE_TOKEN|TOKEN|token> as token,'
+                'or environment<WECHATY_PUPPET_SERVICE_ENDPOINT|ENDPOINT|endpoint> as endpoint'
+            )
+
+        if options.end_point and options.token:
+            log.warning(f'there are endpoint<{options.end_point}> and token<{options.token}>, '
+                        f'and the endpoint will be used for service ...')
 
         self.channel: Optional[Channel] = None
         self._puppet_stub: Optional[PuppetStub] = None
@@ -258,9 +275,6 @@ class PuppetService(Puppet):
         :return:
         """
         response = await self.puppet_stub.contact_list()
-        if response is None:
-            # TODO -> need to refactor the raised error
-            raise WechatyPuppetGrpcError('response is invalid')
         return response.ids
 
     async def tag_contact_delete(self, tag_id: str) -> None:
@@ -441,7 +455,7 @@ class PuppetService(Puppet):
             mini_program = await self.message_mini_program(message_id=message_id)
             await self.message_send_mini_program(conversation_id=to_id, mini_program=mini_program)
         elif payload.type == MessageType.MESSAGE_TYPE_EMOTICON:
-            file_box = await self.message_emoticon(message=payload.text)
+            file_box = await message_emoticon(message=payload.text)
             await self.message_send_file(conversation_id=to_id, file=file_box)
         elif payload.type == MessageType.MESSAGE_TYPE_AUDIO:
             raise WechatyPuppetOperationError('Can not support audio message forward')
@@ -469,20 +483,6 @@ class PuppetService(Puppet):
 
         file_stream = reduce(lambda pre, cu: pre + cu, file_chunk_data)
         file_box = FileBox.from_stream(file_stream, name=name)
-        return file_box
-
-    async def message_emoticon(self, message: str) -> FileBox:
-        """
-        emoticon from message
-        :param message:
-        :return:
-        """
-        DOMTree = xml.dom.minidom.parseString(message)
-        collection = DOMTree.documentElement
-        file_box = FileBox.from_url(
-            url=collection.getElementsByTagName('emoji')[0].getAttribute('cdnurl'),
-            name=collection.getElementsByTagName('emoji')[0].getAttribute('md5') + '.gif'
-        )
         return file_box
 
     async def message_contact(self, message_id: str) -> str:
@@ -540,7 +540,7 @@ class PuppetService(Puppet):
         response = await self.puppet_stub.contact_alias(
             id=contact_id, alias=alias)
         if response.alias is None and alias is None:
-            raise WechatyPuppetGrpcError('can"t get contact<%s> alias' % contact_id)
+            raise WechatyPuppetGrpcError(f'can"t get contact<{contact_id}> alias')
         return response.alias
 
     async def contact_payload_dirty(self, contact_id: str) -> None:
@@ -871,23 +871,19 @@ class PuppetService(Puppet):
         """
         start puppet channel contact_self_qr_code
         """
-        log.info('init puppet')
-        if not self.options.token and not self.options.end_point:
-            raise WechatyPuppetConfigurationError(
-                'Please set a valid envrioment<WECHATY_PUPPET_SERVICE_TOKEN|ENDPOINT|endpoint> or '
-                '<WECHATY_PUPPET_SERVICE_ENDPOINT|ENDPOINT|endpoint>'
-            )
-        # otherwise load them from server by the token
+        log.info('init puppet ...')
+
+        # 1. if there is no endpoint, it should fetch it from chatie server with token
         if not self.options.end_point:
-            # Query the end_point by the token.
-            log.info('There is no endpoint in cache, trying to fetch endpoint with token.')
-            # TODO: the endpoint should be
+
+            log.info(f'fetching endpoint from chatie-server with token<{self.options.token}>')
+
             response = requests.get(
                 f'https://api.chatie.io/v0/hosties/{self.options.token}'
             )
 
             if response.status_code != 200:
-                raise WechatyPuppetGrpcError('service server is invalid ... ')
+                raise WechatyPuppetGrpcError('can"t fetch endpoint from service server ... ')
 
             data = response.json()
 
@@ -897,10 +893,11 @@ class PuppetService(Puppet):
                 )
             if 'port' not in data:
                 raise WechatyPuppetGrpcError("can't find service server port")
-            log.debug('get puppet ip address : <%s>', data)
-            self.options.end_point = '{ip}:{port}'.format(**data)
 
-        if test_endpoint(self.options.end_point, log) is False:
+            self.options.end_point = f'{data["ip"]}:{data["port"]}'
+            log.debug('endpoint from chatie-server : <%s>', self.options.end_point)
+
+        if ping_endpoint(self.options.end_point) is False:
             raise WechatyPuppetConfigurationError(
                 f"can't not ping endpoint: {self.options.end_point}"
             )
