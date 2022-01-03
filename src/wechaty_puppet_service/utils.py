@@ -23,35 +23,41 @@ from __future__ import annotations
 from telnetlib import Telnet
 
 import socket
-from logging import Logger
-from typing import Optional, Tuple
-from ping3 import ping, errors
-from wechaty_puppet.exceptions import WechatyPuppetConfigurationError
+from typing import Tuple
+from urllib.parse import urlsplit
+from xml.dom import minidom
+
+from wechaty_puppet import FileBox, WechatyPuppetError
 
 
-def extract_host_and_port(url: str) -> Tuple[str, Optional[int]]:
+def extract_host_and_port(url: str) -> Tuple[str, int]:
     """
-    It shoule be <host>:<port> format, but it can be a service name.
+    It should be <host>:<port> format, but it can be a service name.
     If it's in docker cluster network, the port can be None.
 
     Args:
         url (str): the service endpoint or names
 
     Return:
-        host (str), port (Optional[int])
+        host (str), port (int)
     """
-    if ':' in url:
-        host, port = url.split(':')
-        if not port.isdigit():
-            raise WechatyPuppetConfigurationError(
-                f'invalid endpoint: <{url}>'
-            )
-        return host, int(port)
+    # 1. be sure that there is schema(http:// or https://) in endpoint
+    if not url.startswith('http://') and not url.startswith('https://'):
+        url = f'http://{url}'
 
-    return url, None
+    # 2. extract host & port from url
+    split_result = urlsplit(url)
+    host = split_result.hostname
+    if not host:
+        raise WechatyPuppetError(f'invalid url: {url}')
+
+    default_port = 443 if split_result.scheme == 'https' else 80
+    port = split_result.port or default_port
+
+    return host, port
 
 
-def test_endpoint(end_point: str, log: Logger) -> int:
+def ping_endpoint(end_point: str) -> bool:
     """
     Check end point is valid
     Use different method:
@@ -60,30 +66,40 @@ def test_endpoint(end_point: str, log: Logger) -> int:
 
     Args:
         end_point (str): host and port
-        log (Logger): for debug
 
     Return:
         return True if end point is valid, otherwise False
 
+    Examples:
+        >>> end_point = '127.0.0.1:80'
+        >>> assert ping_endpoint(end_point)
+
     """
+    # 1. extract host & port
     tn = Telnet()
     host, port = extract_host_and_port(end_point)
 
+    # 2. test host:port with socket
     res = True
-    if port is None:
-        try:
-            if ping(host) is False:
-                res = False
-        except PermissionError as pe:
-            log.error(pe)
-            res = False
-        except errors.PingError as e:
-            log.error(f'got a ping error:\n{e}')
-            res = False
-    else:
-        try:
-            tn.open(host, port=port)
-        except socket.error as e:
-            log.error(e)
-            res = False
+    try:
+        tn.open(host, port=port, timeout=3)
+    except socket.error:
+        res = False
+
     return res
+
+
+async def message_emoticon(message: str) -> FileBox:
+    """
+    emoticon from message
+
+    :param message:
+    :return:
+    """
+    dom_tree = minidom.parseString(message)
+    collection = dom_tree.documentElement
+    file_box = FileBox.from_url(
+        url=collection.getElementsByTagName('emoji')[0].getAttribute('cdnurl'),
+        name=collection.getElementsByTagName('emoji')[0].getAttribute('md5') + '.gif'
+    )
+    return file_box
