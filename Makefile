@@ -21,6 +21,7 @@ all : clean lint
 .PHONY: clean
 clean:
 	rm -fr dist/*
+	rm -rf src/wechaty_puppet_service/*.pyi src/wechaty_puppet_service/**/*.pyi
 
 .PHONY: lint
 lint: pylint pycodestyle flake8 mypy pytype
@@ -100,6 +101,8 @@ run:
 
 .PHONY: dist
 dist:
+	make clean
+	make stub
 	python3 setup.py sdist bdist_wheel
 
 .PHONY: publish
@@ -118,3 +121,7 @@ version:
 .PHONY: deploy-version
 deploy-version:
 	echo "VERSION = '$$(cat VERSION)'" > src/wechaty_puppet_service/version.py
+
+.PHONY: stub
+stub:
+	stubgen -o src ./src

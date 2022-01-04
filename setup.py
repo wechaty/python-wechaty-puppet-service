@@ -52,6 +52,7 @@ def setup() -> None:
         license='Apache-2.0',
         url='https://github.com/wechaty/python-wechaty-puppet-service',
         packages=setuptools.find_packages('src'),
+        package_data={"wechaty_puppet_service": ["*.pyi", "**/*.pyi"]},
         package_dir={'': 'src'},
         install_requires=get_install_requires(),
         classifiers=[

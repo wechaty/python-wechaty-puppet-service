@@ -130,3 +130,5 @@ dmypy.json
 .pytype/
 .idea/
 **/logs/
+src/wechaty_puppet_service/*.pyi
+src/wechaty_puppet_service/**/*.pyi
