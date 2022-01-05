@@ -876,14 +876,15 @@ class PuppetService(Puppet):
         # 1. if there is no endpoint, it should fetch it from chatie server with token
         if not self.options.end_point:
 
-            log.info(f'fetching endpoint from chatie-server with token<{self.options.token}>')
-
-            response = requests.get(
-                f'https://api.chatie.io/v0/hosties/{self.options.token}'
-            )
+            url = f'https://api.chatie.io/v0/hosties/{self.options.token}'
+            log.info('fetching endpoint from chatie-server: %s', url)
+            response = requests.get(url)
 
             if response.status_code != 200:
-                raise WechatyPuppetGrpcError('can"t fetch endpoint from service server ... ')
+                raise WechatyPuppetGrpcError(
+                    'can"t fetch endpoint from chatie server. '
+                    'You can try it later, or make sure that your pc can connect to heroku server '
+                )
 
             data = response.json()
 
