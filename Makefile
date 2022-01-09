@@ -102,7 +102,6 @@ run:
 .PHONY: dist
 dist:
 	make clean
-	make stub
 	python3 setup.py sdist bdist_wheel
 
 .PHONY: publish
@@ -121,7 +120,3 @@ version:
 .PHONY: deploy-version
 deploy-version:
 	echo "VERSION = '$$(cat VERSION)'" > src/wechaty_puppet_service/version.py
-
-.PHONY: stub
-stub:
-	stubgen -o src ./src
