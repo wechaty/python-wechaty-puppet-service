@@ -21,6 +21,7 @@ all : clean lint
 .PHONY: clean
 clean:
 	rm -fr dist/*
+	rm -rf src/wechaty_puppet_service/*.pyi src/wechaty_puppet_service/**/*.pyi
 
 .PHONY: lint
 lint: pylint pycodestyle flake8 mypy pytype
@@ -29,7 +30,7 @@ lint: pylint pycodestyle flake8 mypy pytype
 pylint:
 	pylint \
 		--load-plugins pylint_quotes \
-		--disable W0511,C0302 \
+		--disable W0511,C0302,W1203 \
 		$(SOURCE_GLOB)
 
 .PHONY: pycodestyle
@@ -53,8 +54,7 @@ mypy:
 
 .PHONE: pytype
 pytype:
-	pytype -V 3.8 \
-		--disable=import-error,pyi-error \
+	pytype --disable=import-error,pyi-error \
 		src/
 
 .PHONY: uninstall-git-hook
@@ -101,6 +101,7 @@ run:
 
 .PHONY: dist
 dist:
+	make clean
 	python3 setup.py sdist bdist_wheel
 
 .PHONY: publish
