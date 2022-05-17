@@ -21,6 +21,7 @@ limitations under the License.
 from __future__ import annotations
 
 import json
+import ssl
 from typing import Callable, Optional, List
 from functools import reduce
 from dataclasses import asdict
@@ -79,6 +80,7 @@ from wechaty_puppet.exceptions import (
 from wechaty_puppet_service.config import (
     get_endpoint,
     get_token,
+    TLS_CA_CERT
 )
 from wechaty_puppet_service.utils import (
     extract_host_and_port,
@@ -373,6 +375,7 @@ class PuppetService(Puppet):
         :param file:
         :return:
         """
+        self.puppet_stub.message_send_contact()
         response = await self.puppet_stub.message_send_file(
             conversation_id=conversation_id,
             filebox=file.to_json_str()
@@ -907,6 +910,10 @@ class PuppetService(Puppet):
             )
 
         host, port = extract_host_and_port(self.options.end_point)
+
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        context.load_verify_locations(cadata=TLS_CA_CERT)
+
         self.channel = Channel(host=host, port=port)
 
         # pylint: disable=W0212

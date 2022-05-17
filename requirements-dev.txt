@@ -5,8 +5,9 @@ pycodestyle
 pylint
 pylint-quotes
 pytest
+pytest-asyncio
 pytype
 semver
 grpclib
 wechaty-puppet~=0.3dev2
-pre-commit
+pre-commit  
