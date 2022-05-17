@@ -13,8 +13,8 @@ def versioning(version: str) -> str:
     minor = sem_ver['minor']
     patch = str(sem_ver['patch'])
 
-    if minor % 2:
-        patch = 'dev' + patch
+    # if minor % 2:
+    #     patch = 'dev' + patch
 
     fin_ver = '%d.%d.%s' % (
         major,
