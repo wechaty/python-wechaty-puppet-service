@@ -29,6 +29,10 @@ import requests
 from wechaty_grpc.wechaty import (
     PuppetStub,
 )
+from wechaty_grpc.wechaty.puppet import (
+    MessageFileResponse,
+    MessageImageResponse
+)
 # pylint: disable=E0401
 from grpclib.client import Channel
 # pylint: disable=E0401
@@ -238,16 +242,8 @@ class PuppetService(Puppet):
         :param image_type:
         :return:
         """
-        file_chunk_data: List[bytes] = []
-        name: str = ''
-
-        async for stream in self.puppet_stub.message_image_stream(id=message_id, type=image_type):
-            file_chunk_data.append(stream.file_box_chunk.data)
-            if not name and stream.file_box_chunk.name:
-                name = stream.file_box_chunk.name
-
-        file_stream = reduce(lambda pre, cu: pre + cu, file_chunk_data)
-        file_box = FileBox.from_stream(file_stream, name=name)
+        response: MessageImageResponse = await self.puppet_stub.message_image(id=message_id, type=image_type)
+        file_box = FileBox.from_json(response.filebox)
         return file_box
 
     def on(self, event_name: str, caller: Callable[..., None]) -> None:
@@ -476,16 +472,8 @@ class PuppetService(Puppet):
         :param message_id:
         :return:
         """
-        file_chunk_data: List[bytes] = []
-        name: str = ''
-
-        async for stream in self.puppet_stub.message_file_stream(id=message_id):
-            file_chunk_data.append(stream.file_box_chunk.data)
-            if not name and stream.file_box_chunk.name:
-                name = stream.file_box_chunk.name
-
-        file_stream = reduce(lambda pre, cu: pre + cu, file_chunk_data)
-        file_box = FileBox.from_stream(file_stream, name=name)
+        response: MessageFileResponse = await self.puppet_stub.message_file(id=message_id)
+        file_box = FileBox.from_json(response.filebox)
         return file_box
 
     async def message_contact(self, message_id: str) -> str:
