@@ -22,7 +22,6 @@ from __future__ import annotations
 
 import json
 from typing import Callable, Optional, List
-from functools import reduce
 from dataclasses import asdict
 import requests
 
@@ -242,7 +241,9 @@ class PuppetService(Puppet):
         :param image_type:
         :return:
         """
-        response: MessageImageResponse = await self.puppet_stub.message_image(id=message_id, type=image_type)
+        response: MessageImageResponse = await self.puppet_stub.message_image(
+            id=message_id,
+            type=image_type)
         file_box = FileBox.from_json(response.filebox)
         return file_box
 
