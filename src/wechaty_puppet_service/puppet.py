@@ -675,7 +675,7 @@ class PuppetService(Puppet):
             id=room_invitation_id,
             payload=payload
         )
-        return RoomInvitationPayload(**response.to_dict())
+        return response
 
     async def room_invitation_accept(self, room_invitation_id: str) -> None:
         """
